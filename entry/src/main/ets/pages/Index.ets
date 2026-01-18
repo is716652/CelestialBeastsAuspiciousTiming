@@ -96,6 +96,16 @@ interface RuleItem {
 
 interface RulesConfig {
   rules: Record<string, RuleItem>;
+  branch_meanings: Record<string, BranchMeaning>;
+}
+
+interface BranchMeaning {
+  direction: string;
+  element: string;
+  environment: string;
+  time_hint: string;
+  informant: string;
+  general: string;
 }
 
 // ============== 四禽计算结果接口 ==============
@@ -145,8 +155,10 @@ struct Index {
   @State selectedMonth: number = new Date().getMonth() + 1;
   @State selectedDay: number = new Date().getDate();
   @State selectedHourIndex: number = this.getCurrentHourIndex();
+  @State useGodMode: number = 0;  // 0=传统分类, 1=自定义用神
+  @State selectedCategoryIndex: number = 0;  // 传统分类索引
   @State selectedTabIndex: number = 0;  // 四象Tab索引
-  @State selectedUseGodStar: string = '参';  // 选中的用神星宿
+  @State selectedUseGodStar: string = '参';  // 自定义用神星宿
 
   // 四禽计算结果
   @State fourStars: FourStarsResult | null = null;
@@ -382,9 +394,23 @@ struct Index {
     const constellations = this.starRulesConfig.constellations_order;
     const branches = this.lostItemsConfig.branches_order;
 
+    // 根据模式确定用神星宿
+    let useGodStar: string;
+    let categoryName: string;
+    if (this.useGodMode === 0) {
+      // 传统分类模式
+      const useGod = this.lostItemsConfig.use_gods[this.selectedCategoryIndex];
+      useGodStar = useGod.star;
+      categoryName = useGod.category;
+    } else {
+      // 自定义用神模式
+      useGodStar = this.selectedUseGodStar;
+      categoryName = '自定义读象';
+    }
+
     const dayStarIndex = constellations.indexOf(this.fourStars.dayStar);
     const hourIndex = this.selectedHourIndex;
-    const useStarIndex = constellations.indexOf(this.selectedUseGodStar);
+    const useStarIndex = constellations.indexOf(useGodStar);
 
     if (dayStarIndex < 0 || useStarIndex < 0) {
       this.resultSummary = '数据配置不完整，无法演算。';
@@ -397,17 +423,37 @@ struct Index {
     const resultBranchIndex = (hourIndex + deltaStars) % 12;
     this.resultBranch = branches[resultBranchIndex];
 
-    const key = this.buildRuleKey(this.selectedUseGodStar, this.resultBranch);
+    const key = this.buildRuleKey(useGodStar, this.resultBranch);
     this.resultKey = key;
 
     const rule = this.rulesConfig.rules[key];
+    const starInfo = this.starRulesConfig.constellations_full[useGodStar];
 
-    this.resultSummary = `用神「${this.selectedUseGodStar}」宿 · 落「${this.resultBranch}」宫`;
+    if (this.useGodMode === 0) {
+      // 传统分类模式：显示分类名称
+      this.resultSummary = `寻${categoryName} · 用神「${useGodStar}」宿 · 落「${this.resultBranch}」宫`;
+    } else {
+      // 自定义用神模式
+      this.resultSummary = `用神「${starInfo?.full_name || useGodStar}」 · 落「${this.resultBranch}」宫`;
+    }
 
     if (rule) {
       this.resultDetail = rule.text;
     } else {
-      this.resultDetail = `当前组合（${key}）在案例库中暂无详细记载。`;
+      // 无具体断语时，使用宫位通用含义推导
+      const branchMeaning = this.rulesConfig.branch_meanings[this.resultBranch];
+      if (branchMeaning) {
+        this.resultDetail = `【通用推导】此组合无古籍记载，以下为宫位基本含义推导：\n\n` +
+          `◎ 方位：${branchMeaning.direction}\n` +
+          `◎ 五行：${branchMeaning.element}\n` +
+          `◎ 环境：${branchMeaning.environment}\n` +
+          `◎ 报信人：${branchMeaning.informant}\n` +
+          `◎ 时间：${branchMeaning.time_hint}\n\n` +
+          `【综合分析】${branchMeaning.general}\n\n` +
+          `用神「${starInfo?.full_name || useGodStar}」属${starInfo?.element || '未知'}，落${this.resultBranch}宫属${branchMeaning.element}，可结合五行生克参考判断。`;
+      } else {
+        this.resultDetail = `当前组合（${key}）在案例库中暂无详细记载。`;
+      }
     }
     this.showResult = true;
   }
@@ -430,6 +476,17 @@ struct Index {
     const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
     const times = ['23-01', '01-03', '03-05', '05-07', '07-09', '09-11', '11-13', '13-15', '15-17', '17-19', '19-21', '21-23'];
     return `${branches[index]}时 (${times[index]}点)`;
+  }
+
+  private getUseGodDisplayText(): string {
+    if (!this.lostItemsConfig || !this.starRulesConfig) return '';
+    if (this.useGodMode === 0) {
+      const useGod = this.lostItemsConfig.use_gods[this.selectedCategoryIndex];
+      return `${useGod.star}宿（寻${useGod.category}）→ 落${this.resultBranch}宫`;
+    } else {
+      const starInfo = this.starRulesConfig.constellations_full[this.selectedUseGodStar];
+      return `${this.selectedUseGodStar}宿（${starInfo?.full_name || ''}）→ 落${this.resultBranch}宫`;
+    }
   }
 
   // ============== UI 构建 ==============
@@ -645,97 +702,170 @@ struct Index {
             .margin({ left: 16, right: 16, bottom: 12 })
           }
 
-          // ========== 用神选择区（四象分组 + 网格） ==========
+          // ========== 用神选择区 ==========
           Column() {
+            // 模式切换Tab
             Row() {
-              Text('选择用神星宿')
-                .fontSize(15)
-                .fontWeight(FontWeight.Medium)
-                .fontColor('#333333')
-              Blank()
-              Text(this.starRulesConfig.constellations_full[this.selectedUseGodStar]?.full_name || '')
+              Text('传统分类')
                 .fontSize(14)
-                .fontWeight(FontWeight.Medium)
-                .fontColor('#3d6b4f')
+                .fontWeight(this.useGodMode === 0 ? FontWeight.Medium : FontWeight.Normal)
+                .fontColor(this.useGodMode === 0 ? '#ffffff' : '#666666')
+                .backgroundColor(this.useGodMode === 0 ? '#3d6b4f' : '#f0f0f0')
+                .borderRadius(20)
+                .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+                .onClick(() => {
+                  this.useGodMode = 0;
+                  this.showResult = false;
+                })
+              Text('自定义用神')
+                .fontSize(14)
+                .fontWeight(this.useGodMode === 1 ? FontWeight.Medium : FontWeight.Normal)
+                .fontColor(this.useGodMode === 1 ? '#ffffff' : '#666666')
+                .backgroundColor(this.useGodMode === 1 ? '#3d6b4f' : '#f0f0f0')
+                .borderRadius(20)
+                .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+                .margin({ left: 12 })
+                .onClick(() => {
+                  this.useGodMode = 1;
+                  this.showResult = false;
+                })
             }
             .width('100%')
-            .margin({ bottom: 10 })
+            .justifyContent(FlexAlign.Center)
+            .margin({ bottom: 16 })
 
-            // 四象Tab
-            Row() {
-              ForEach(this.starRulesConfig.four_symbols.groups, (group: FourSymbolGroup, index: number) => {
-                Text(group.name)
-                  .fontSize(13)
-                  .fontColor(this.selectedTabIndex === index ? '#ffffff' : '#666666')
-                  .backgroundColor(this.selectedTabIndex === index ? group.color : '#f0f0f0')
-                  .borderRadius(16)
-                  .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-                  .margin({ right: index < 3 ? 8 : 0 })
-                  .onClick(() => {
-                    this.selectedTabIndex = index;
-                  })
-              })
-            }
-            .width('100%')
-            .justifyContent(FlexAlign.Start)
-            .margin({ bottom: 12 })
+            if (this.useGodMode === 0) {
+              // ========== 传统分类模式 ==========
+              Column() {
+                Text('选择要寻找的对象')
+                  .fontSize(15)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor('#333333')
+                  .width('100%')
+                  .margin({ bottom: 12 })
 
-            // 星宿网格（7个一组）
-            Column() {
-              Grid() {
-                ForEach(this.starRulesConfig.four_symbols.groups[this.selectedTabIndex].stars,
-                  (star: string, idx: number) => {
+                // 分类网格
+                Grid() {
+                  ForEach(this.lostItemsConfig!.use_gods, (item: LostItemUseGod, index: number) => {
                     GridItem() {
                       Column() {
-                        Text(this.starRulesConfig!.constellations_full[star]?.animal || '')
-                          .fontSize(20)
-                          .margin({ bottom: 2 })
-                        Text(star)
+                        Text(item.category)
                           .fontSize(14)
                           .fontWeight(FontWeight.Medium)
-                          .fontColor(this.selectedUseGodStar === star ? '#ffffff' : '#333333')
-                        Text(this.starRulesConfig!.constellations_full[star]?.element || '')
+                          .fontColor(this.selectedCategoryIndex === index ? '#ffffff' : '#333333')
+                        Text(item.note)
                           .fontSize(10)
-                          .fontColor(this.selectedUseGodStar === star ? '#ffffffcc' : '#888888')
-                          .margin({ top: 2 })
+                          .fontColor(this.selectedCategoryIndex === index ? '#ffffffcc' : '#888888')
+                          .margin({ top: 4 })
                       }
                       .width('100%')
                       .height('100%')
                       .justifyContent(FlexAlign.Center)
-                      .backgroundColor(this.selectedUseGodStar === star ?
-                        this.starRulesConfig!.four_symbols.groups[this.selectedTabIndex].color : '#f8f8f6')
+                      .backgroundColor(this.selectedCategoryIndex === index ? '#3d6b4f' : '#f8f8f6')
                       .borderRadius(10)
                       .onClick(() => {
-                        this.selectedUseGodStar = star;
+                        this.selectedCategoryIndex = index;
                         this.showResult = false;
                       })
                     }
                   })
+                }
+                .columnsTemplate('1fr 1fr 1fr')
+                .rowsTemplate('1fr 1fr 1fr 1fr 1fr')
+                .columnsGap(8)
+                .rowsGap(8)
+                .width('100%')
+                .height(280)
               }
-              .columnsTemplate('1fr 1fr 1fr 1fr')
-              .rowsTemplate('1fr 1fr')
-              .columnsGap(8)
-              .rowsGap(8)
               .width('100%')
-              .height(140)
-            }
-            .width('100%')
+            } else {
+              // ========== 自定义用神模式 ==========
+              Column() {
+                Row() {
+                  Text('根据读象选择用神星宿')
+                    .fontSize(15)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#333333')
+                  Blank()
+                  Text(this.starRulesConfig!.constellations_full[this.selectedUseGodStar]?.full_name || '')
+                    .fontSize(14)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#3d6b4f')
+                }
+                .width('100%')
+                .margin({ bottom: 10 })
 
-            // 用神参考提示
-            Row() {
-              Text('参考：')
-                .fontSize(12)
-                .fontColor('#888888')
-              Text(this.starRulesConfig.use_god_hints.hints[this.selectedUseGodStar] || '')
-                .fontSize(12)
-                .fontColor('#666666')
-                .layoutWeight(1)
+                // 四象Tab
+                Row() {
+                  ForEach(this.starRulesConfig!.four_symbols.groups, (group: FourSymbolGroup, index: number) => {
+                    Text(group.name)
+                      .fontSize(12)
+                      .fontColor(this.selectedTabIndex === index ? '#ffffff' : '#666666')
+                      .backgroundColor(this.selectedTabIndex === index ? group.color : '#f0f0f0')
+                      .borderRadius(14)
+                      .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+                      .margin({ right: index < 3 ? 6 : 0 })
+                      .onClick(() => {
+                        this.selectedTabIndex = index;
+                      })
+                  })
+                }
+                .width('100%')
+                .justifyContent(FlexAlign.Start)
+                .margin({ bottom: 10 })
+
+                // 星宿网格
+                Grid() {
+                  ForEach(this.starRulesConfig!.four_symbols.groups[this.selectedTabIndex].stars,
+                    (star: string) => {
+                      GridItem() {
+                        Column() {
+                          Text(this.starRulesConfig!.constellations_full[star]?.animal || '')
+                            .fontSize(18)
+                          Text(star)
+                            .fontSize(13)
+                            .fontWeight(FontWeight.Medium)
+                            .fontColor(this.selectedUseGodStar === star ? '#ffffff' : '#333333')
+                            .margin({ top: 2 })
+                        }
+                        .width('100%')
+                        .height('100%')
+                        .justifyContent(FlexAlign.Center)
+                        .backgroundColor(this.selectedUseGodStar === star ?
+                          this.starRulesConfig!.four_symbols.groups[this.selectedTabIndex].color : '#f8f8f6')
+                        .borderRadius(8)
+                        .onClick(() => {
+                          this.selectedUseGodStar = star;
+                          this.showResult = false;
+                        })
+                      }
+                    })
+                }
+                .columnsTemplate('1fr 1fr 1fr 1fr')
+                .rowsTemplate('1fr 1fr')
+                .columnsGap(6)
+                .rowsGap(6)
+                .width('100%')
+                .height(110)
+
+                // 用神参考提示
+                Row() {
+                  Text('参考：')
+                    .fontSize(11)
+                    .fontColor('#888888')
+                  Text(this.starRulesConfig!.use_god_hints.hints[this.selectedUseGodStar] || '')
+                    .fontSize(11)
+                    .fontColor('#666666')
+                    .layoutWeight(1)
+                }
+                .width('100%')
+                .margin({ top: 8 })
+                .padding({ left: 6, right: 6, top: 6, bottom: 6 })
+                .backgroundColor('#fafaf8')
+                .borderRadius(6)
+              }
+              .width('100%')
             }
-            .width('100%')
-            .margin({ top: 10 })
-            .padding({ left: 8, right: 8, top: 8, bottom: 8 })
-            .backgroundColor('#fafaf8')
-            .borderRadius(8)
           }
           .width('100%')
           .padding(16)
@@ -814,7 +944,7 @@ struct Index {
                     .fontSize(13)
                     .fontColor('#666666')
                     .width(60)
-                  Text(`${this.selectedUseGodStar}宿（${this.starRulesConfig!.constellations_full[this.selectedUseGodStar]?.full_name || ''}）→ 落${this.resultBranch}宫`)
+                  Text(this.getUseGodDisplayText())
                     .fontSize(13)
                     .fontColor('#2d5a3d')
                     .fontWeight(FontWeight.Medium)
