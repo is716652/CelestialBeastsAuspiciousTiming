@@ -1,0 +1,98 @@
+{
+  "meta": {
+    "source": "演禽通配置",
+    "description": "Calendar data range and lost items/use-god mapping for divination layout."
+  },
+  "calendar": {
+    "data_path": "calendar",
+    "start_year": 1900,
+    "end_year": 2061,
+    "file_count": 17,
+    "years_per_full_file": 10,
+    "last_file_years": 2,
+    "file_name_prefix": "calendar_data_",
+    "file_name_suffix": ".json",
+    "file_index_padding": 4,
+    "file_index_base_year": 1900
+  },
+  "lost_items": {
+    "source": "鬼谷子二十八宿演禽走失全书歌",
+    "description": "Mapping of lost items/people to specific constellations (Use Gods).",
+    "constellations_order": [
+      "角", "亢", "氐", "房", "心", "尾", "箕",
+      "斗", "牛", "女", "虚", "危", "室", "壁",
+      "奎", "娄", "胃", "昴", "毕", "觜", "参",
+      "井", "鬼", "柳", "星", "张", "翼", "轸"
+    ],
+    "branches_order": [
+      "子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"
+    ],
+    "use_gods": [
+      {
+        "category": "男子",
+        "star": "觜",
+        "note": "男寻觜宿"
+      },
+      {
+        "category": "女子",
+        "star": "奎",
+        "note": "妇寻奎"
+      },
+      {
+        "category": "小儿/男孩",
+        "star": "虚",
+        "note": "小儿寻虚"
+      },
+      {
+        "category": "小女/女孩",
+        "star": "女",
+        "note": "女寻蝠"
+      },
+      {
+        "category": "牛",
+        "star": "牛",
+        "note": "牛寻牛星"
+      },
+      {
+        "category": "马",
+        "star": "星",
+        "note": "马寻马"
+      },
+      {
+        "category": "羊",
+        "star": "鬼",
+        "note": "羊寻羊兮"
+      },
+      {
+        "category": "猪",
+        "star": "室",
+        "note": "猪寻猪"
+      },
+      {
+        "category": "驴/骡",
+        "star": "房",
+        "note": "走失驴骡寻房宿"
+      },
+      {
+        "category": "金银财宝",
+        "star": "参",
+        "note": "金银财宝是寻参"
+      },
+      {
+        "category": "鸡",
+        "star": "昴",
+        "note": "失鸡寻昴"
+      },
+      {
+        "category": "狗",
+        "star": "娄",
+        "note": "狗寻娄"
+      },
+      {
+        "category": "衣服",
+        "star": "柳",
+        "note": "衣服寻柳定是真"
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "禽星演寻 - 传统星宿演算法模拟实验室"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "星宿演算法研习能力"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "禽星演寻"
+    }
+  ]
+}

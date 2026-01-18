@@ -1,0 +1,56 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\is716\\.ohos\\config\\default_CelestialBeastsAuspiciousTiming_FesuLodqKOr-9ZmwjV2sG8vy0i6gztNZJxq7Df6KNKw=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B0E75C7F723F6626054A02690AE05C686ED2AC7BC6D1887FAA0313F668A827CAACE8816CE279D29",
+          "profile": "C:\\Users\\is716\\.ohos\\config\\default_CelestialBeastsAuspiciousTiming_FesuLodqKOr-9ZmwjV2sG8vy0i6gztNZJxq7Df6KNKw=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\is716\\.ohos\\config\\default_CelestialBeastsAuspiciousTiming_FesuLodqKOr-9ZmwjV2sG8vy0i6gztNZJxq7Df6KNKw=.p12",
+          "storePassword": "0000001B0043688E90F44559192930AE7EAFB45A490A2CC8130BFA4CB41BBA2BE33B6BDCB521392052D949"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "6.0.0(20)",
+        "compatibleSdkVersion": "6.0.0(20)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
