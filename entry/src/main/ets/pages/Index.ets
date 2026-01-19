@@ -1,5 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { buffer, JSON as ArkJSON } from '@kit.ArkTS';
+import { router } from '@kit.ArkUI';
 
 // ============== 接口定义 ==============
 
@@ -59,6 +60,10 @@ interface YanqinStarRulesConfig {
   hour_time_ranges: Record<string, HourTimeRange>;
   four_symbols: FourSymbols;
   use_god_hints: UseGodHints;
+  huo_yao_rules: HuoYaoRules;
+  qin_classification: QinClassification;
+  tun_dan: TunDanConfig;
+  ri_ye_qin: RiYeQinConfig;
 }
 
 interface LostItemUseGod {
@@ -87,6 +92,73 @@ interface FourSymbols {
 interface UseGodHints {
   description: string;
   hints: Record<string, string>;
+}
+
+// ============== 演禽盘式相关接口 ==============
+
+interface HuoYaoRules {
+  description: string;
+  element_to_flip_star: Record<string, string>;
+  start_branch: string;
+}
+
+interface QinClassification {
+  description: string;
+  天禽: Array<string>;
+  地禽: Array<string>;
+  水禽: Array<string>;
+  家禽: Array<string>;
+  rules: Record<string, string>;
+}
+
+interface WuShiConfig {
+  list: Array<string>;
+}
+
+interface TunDanConfig {
+  description: string;
+  food_map: Record<string, Array<string>>;
+  wu_shi: WuShiConfig;
+  animal_to_star: Record<string, string>;
+}
+
+interface RiYeQinConfig {
+  description: string;
+  日禽: Array<string>;
+  夜禽: Array<string>;
+  日夜通用: Array<string>;
+  rules: Record<string, string>;
+}
+
+// ============== 锁泊规则配置接口 ==============
+
+interface BranchEnvironment {
+  inner: string;
+  outer: string;
+  element: string;
+  direction: string;
+}
+
+interface SuoBoGe {
+  name: string;
+  text: string;
+  result: string;
+}
+
+interface DefaultJudgmentRule {
+  branches: Array<string>;
+  result: string;
+  text: string;
+}
+
+interface DefaultJudgment {
+  rules: Record<string, DefaultJudgmentRule>;
+}
+
+interface SuoBoRulesConfig {
+  branch_environments: Record<string, BranchEnvironment>;
+  suo_bo_ge: Record<string, SuoBoGe>;
+  default_judgment: DefaultJudgment;
 }
 
 interface RuleItem {
@@ -122,6 +194,7 @@ interface DayStarCalcResult {
   element: string;
   yuanName: string;
   jiangIndex: number;
+  jiangStar: string;  // 四将符头
 }
 
 interface FourStarsResult {
@@ -135,8 +208,59 @@ interface FourStarsResult {
   dayElement: string;
   hourStar: string;
   hourStarFull: string;
+  hourElement: string;
   yuanName: string;
   jiangIndex: number;
+  jiangStar: string;  // 四将符头
+}
+
+// 翻禽/活曜计算结果
+interface FanQinResult {
+  fanQin: string;         // 翻禽（天禽/他禽）
+  fanQinFull: string;
+  fanQinElement: string;
+}
+
+interface HuoYaoResult {
+  huoYao: string;         // 活曜（倒将/变禽）
+  huoYaoFull: string;
+  huoYaoElement: string;
+}
+
+// 锁泊格局结果
+interface SuoBoResult {
+  star: string;           // 星宿
+  branch: string;         // 落宫地支
+  environment: string;    // 环境（山、林、火等）
+  geName: string;         // 格局名（如"极乐宫"）
+  geText: string;         // 格局断语
+  geResult: string;       // 吉凶结果
+}
+
+// 吞啤关系结果
+interface TunDanResult {
+  star1: string;
+  star1Animal: string;
+  star2: string;
+  star2Animal: string;
+  canEat: boolean;        // star1能否吃star2
+  description: string;    // 关系描述
+}
+
+// 飞伏状态结果
+interface FeifuResult {
+  star: string;
+  isDayQin: boolean;      // 是否日禽
+  isNightQin: boolean;    // 是否夜禽
+  isDaytime: boolean;     // 当前是否白天
+  status: string;         // 飞/伏
+  description: string;    // 状态描述
+}
+
+// 三禽分类结果
+interface QinTypeResult {
+  star: string;
+  qinType: string;        // 天禽/地禽/水禽
 }
 
 @Entry
@@ -149,6 +273,7 @@ struct Index {
   @State starRulesConfig: YanqinStarRulesConfig | null = null;
   @State lostItemsConfig: LostItemsConfig | null = null;
   @State rulesConfig: RulesConfig | null = null;
+  @State suoBoConfig: SuoBoRulesConfig | null = null;  // 锁泊规则配置
 
   // 用户选择
   @State selectedYear: number = new Date().getFullYear();
@@ -245,11 +370,13 @@ struct Index {
     const starRules = await this.loadJsonFromRaw<YanqinStarRulesConfig>('yanqin_star_rules.json');
     const lostItems = await this.loadJsonFromRaw<LostItemsConfig>('lost_items_config.json');
     const rules = await this.loadJsonFromRaw<RulesConfig>('lost_items_rules.json');
+    const suoBo = await this.loadJsonFromRaw<SuoBoRulesConfig>('suo_bo_rules.json');
 
     if (starRules && lostItems && rules) {
       this.starRulesConfig = starRules;
       this.lostItemsConfig = lostItems;
       this.rulesConfig = rules;
+      this.suoBoConfig = suoBo;
       this.hasLoaded = true;
       this.calculateFourStars();
     }
@@ -289,8 +416,10 @@ struct Index {
       dayElement: dayResult.element,
       hourStar: hourResult.star,
       hourStarFull: hourResult.fullName,
+      hourElement: hourResult.element,
       yuanName: dayResult.yuanName,
-      jiangIndex: dayResult.jiangIndex
+      jiangIndex: dayResult.jiangIndex,
+      jiangStar: dayResult.jiangStar
     };
     this.fourStars = result;
   }
@@ -362,7 +491,8 @@ struct Index {
       fullName: info.full_name,
       element: info.element,
       yuanName: yuanName,
-      jiangIndex: jiangIndex + 1
+      jiangIndex: jiangIndex + 1,
+      jiangStar: jiangStar  // 返回四将符头
     };
     return result;
   }
@@ -382,6 +512,250 @@ struct Index {
       element: info.element
     };
     return result;
+  }
+
+  // ============== 翻禽计算（天禽/他禽） ==============
+  // 口诀：值时支上起将星，顺行逐位向时禽。寻得时禽权且止，逆回时位向他禽。
+  // 算法：将星加时位 → 顺寻时禽落点 → 逆数回时位
+  private calculateFanQin(jiangStar: string, hourStar: string, hourIndex: number, cfg: YanqinStarRulesConfig): FanQinResult {
+    const constellations = cfg.constellations_order;
+    const jiangStarIndex = constellations.indexOf(jiangStar);
+    const hourStarIndex = constellations.indexOf(hourStar);
+
+    // 1. 计算从将星到时禽的顺数步数
+    const forwardSteps = ((hourStarIndex - jiangStarIndex) + 28) % 28;
+
+    // 2. 翻禽公式：时禽位置 + 顺数步数
+    // 原理：逆数回时位时，地支逆转但星宿顺转
+    const fanQinIndex = (hourStarIndex + forwardSteps) % 28;
+    const fanQin = constellations[fanQinIndex];
+    const info = cfg.constellations_full[fanQin];
+
+    return {
+      fanQin: fanQin,
+      fanQinFull: info.full_name,
+      fanQinElement: info.element
+    };
+  }
+
+  // ============== 活曜计算（倒将/变禽） ==============
+  // 口诀：日毕月尾火翻奎，水氐木虚金骑牛，土宿还从箕位起，每从寅位逆回转。
+  // 算法：寅位起翻转星宿 → 逆寻时禽落点 → 顺数回用时
+  private calculateHuoYao(hourStar: string, hourElement: string, hourIndex: number, cfg: YanqinStarRulesConfig): HuoYaoResult {
+    const constellations = cfg.constellations_order;
+    const branches = cfg.branches_order;
+
+    // 1. 根据时禽的七政属性确定翻转起点星宿
+    const flipStar = cfg.huo_yao_rules.element_to_flip_star[hourElement];
+    const flipStarIndex = constellations.indexOf(flipStar);
+    const hourStarIndex = constellations.indexOf(hourStar);
+
+    // 2. 寅位索引（固定为2）
+    const yinIndex = branches.indexOf('寅'); // = 2
+
+    // 3. 从翻转星宿逆数找时禽落点
+    // 逆数步数 = 时禽位置 - 翻转星宿位置（星宿顺行，地支逆行）
+    const backwardSteps = ((hourStarIndex - flipStarIndex) + 28) % 28;
+
+    // 4. 时禽落在的地支（从寅逆数）
+    const hourStarBranch = ((yinIndex - backwardSteps % 12) + 12) % 12;
+
+    // 5. 从时禽落点顺数回用时
+    const forwardSteps = ((hourIndex - hourStarBranch) + 12) % 12;
+
+    // 6. 活曜 = 时禽 + 顺数步数
+    const huoYaoIndex = (hourStarIndex + forwardSteps) % 28;
+    const huoYao = constellations[huoYaoIndex];
+    const info = cfg.constellations_full[huoYao];
+
+    return {
+      huoYao: huoYao,
+      huoYaoFull: info.full_name,
+      huoYaoElement: info.element
+    };
+  }
+
+  // ============== 锁泊格局判断 ==============
+  // 根据星宿落在的地支，判断格局吉凶
+  private judgeSuoBo(star: string, branch: string, cfg: YanqinStarRulesConfig): SuoBoResult {
+    if (!this.suoBoConfig) {
+      return {
+        star: star,
+        branch: branch,
+        environment: '',
+        geName: '无配置',
+        geText: '锁泊规则未加载',
+        geResult: '平'
+      };
+    }
+
+    const suoBoCfg = this.suoBoConfig;
+    
+    // 获取地支环境
+    const branchEnv = suoBoCfg.branch_environments[branch] as BranchEnvironment;
+    const environment = branchEnv ? branchEnv.inner : '未知';
+
+    // 查找特定格局
+    const geKey = `${star}_${branch}`;
+    const ge = suoBoCfg.suo_bo_ge[geKey] as SuoBoGe;
+
+    if (ge) {
+      return {
+        star: star,
+        branch: branch,
+        environment: environment,
+        geName: ge.name,
+        geText: ge.text,
+        geResult: ge.result
+      };
+    }
+
+    // 无特定格局时，使用通用规则判断
+    const starInfo = cfg.constellations_full[star];
+    const starElement = starInfo?.element || '未知';
+    const branchElement = branchEnv?.element || '未知';
+
+    // 检查通用规则
+    const defaultRules = suoBoCfg.default_judgment.rules;
+    for (const ruleKey of Object.keys(defaultRules)) {
+      const rule = defaultRules[ruleKey];
+      if (rule.branches.includes(branch)) {
+        // 检查五行匹配
+        if (ruleKey.startsWith('水禽') && starElement === '水') {
+          return { star, branch, environment, geName: ruleKey, geText: rule.text, geResult: rule.result };
+        }
+        if (ruleKey.startsWith('火禽') && starElement === '火') {
+          return { star, branch, environment, geName: ruleKey, geText: rule.text, geResult: rule.result };
+        }
+        if (ruleKey.startsWith('木禽') && starElement === '木') {
+          return { star, branch, environment, geName: ruleKey, geText: rule.text, geResult: rule.result };
+        }
+        if (ruleKey.startsWith('金禽') && starElement === '金') {
+          return { star, branch, environment, geName: ruleKey, geText: rule.text, geResult: rule.result };
+        }
+        if (ruleKey.startsWith('土禽') && starElement === '土') {
+          return { star, branch, environment, geName: ruleKey, geText: rule.text, geResult: rule.result };
+        }
+      }
+    }
+
+    // 默认结果
+    return {
+      star: star,
+      branch: branch,
+      environment: environment,
+      geName: `${starInfo?.animal || star}泊${environment}`,
+      geText: `${starInfo?.full_name || star}落${branch}宫（${environment}）`,
+      geResult: '平'
+    };
+  }
+
+  // ============== 三禽分类判断 ==============
+  // 天禽/地禽/水禽分类
+  private judgeQinType(star: string, cfg: YanqinStarRulesConfig): QinTypeResult {
+    const classification = cfg.qin_classification;
+    
+    if (classification.天禽.includes(star)) {
+      return { star, qinType: '天禽' };
+    }
+    if (classification.水禽.includes(star)) {
+      return { star, qinType: '水禽' };
+    }
+    return { star, qinType: '地禽' };
+  }
+
+  // ============== 吞啖关系判断 ==============
+  // 判断 star1 能否吃 star2
+  private judgeTunDan(star1: string, star2: string, cfg: YanqinStarRulesConfig): TunDanResult {
+    const tunDan = cfg.tun_dan;
+    const info1 = cfg.constellations_full[star1];
+    const info2 = cfg.constellations_full[star2];
+    const animal1 = info1?.animal || '';
+    const animal2 = info2?.animal || '';
+  
+    // 获取 star1 的食物列表
+    const foodList = tunDan.food_map[star1] || [];
+    let canEat = false;
+    let description = '';
+  
+    if (foodList.length > 0) {
+      // 检查是否包含 "百兽"(吃一切)
+      if (foodList.includes('百兽')) {
+        canEat = true;
+        description = `${info1?.full_name || star1}食百兽，能克${info2?.full_name || star2}`;
+      } else if (foodList.includes(animal2)) {
+        canEat = true;
+        description = `${animal1}食${animal2}，${info1?.full_name || star1}克${info2?.full_name || star2}`;
+      }
+    }
+  
+    if (!canEat) {
+      // 检查是否无食
+      const wuShiList = tunDan.wu_shi?.list || [];
+      if (wuShiList.includes(animal1)) {
+        description = `${animal1}为无食之禽，不能克他禽`;
+      } else {
+        description = `${animal1}不食${animal2}，无克`;
+      }
+    }
+  
+    return {
+      star1,
+      star1Animal: animal1,
+      star2,
+      star2Animal: animal2,
+      canEat,
+      description
+    };
+  }
+
+  // ============== 飞伏状态判断 ==============
+  // 根据日禽/夜禽和时辰判断飞伏
+  private judgeFeifu(star: string, hourIndex: number, cfg: YanqinStarRulesConfig): FeifuResult {
+    const riYeQin = cfg.ri_ye_qin;
+    const isDayQin = riYeQin.日禽.includes(star);
+    const isNightQin = riYeQin.夜禽.includes(star);
+    const isDayNightCommon = riYeQin.日夜通用.includes(star);
+
+    // 判断当前是否白天（寅时刻卯时，5:00-19:00）
+    // 时辰索引: 子(0), 丑(1), 寅(2), 卯(3), 辰(4), 巳(5), 午(6), 未(7), 申(8), 酉(9), 戌(10), 亥(11)
+    // 白天约为 寅(2) ~ 酉(9)
+    const isDaytime = hourIndex >= 2 && hourIndex <= 9;
+
+    let status = '';
+    let description = '';
+
+    if (isDayNightCommon) {
+      status = '通';
+      description = `${star}为日夜通用之禽，无论昼夜皆可活动`;
+    } else if (isDaytime) {
+      // 白天
+      if (isDayQin) {
+        status = '飞';
+        description = `昼间临日禽${star}，飞（显形、在动）`;
+      } else {
+        status = '伏';
+        description = `昼间临夜禽${star}，伏（隐形、休息）`;
+      }
+    } else {
+      // 夜晚
+      if (isNightQin) {
+        status = '飞';
+        description = `夜间临夜禽${star}，飞（活跃）`;
+      } else {
+        status = '伏';
+        description = `夜间临日禽${star}，伏（休息）`;
+      }
+    }
+
+    return {
+      star,
+      isDayQin,
+      isNightQin,
+      isDaytime,
+      status,
+      description
+    };
   }
 
   // ============== 排盘演算 ==============
@@ -506,8 +880,69 @@ struct Index {
             .margin({ top: 6 })
         }
         .width('100%')
-        .padding({ top: 40, bottom: 20 })
+        .padding({ top: 40, bottom: 16 })
         .alignItems(HorizontalAlign.Center)
+
+        // ========== 功能入口双卡片 ==========
+        Row() {
+          // 走失演寻卡片
+          Column() {
+            Text('走失演寻')
+              .fontSize(17)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#2d5a3d')
+            Text('简易歌诀 · 速断')
+              .fontSize(11)
+              .fontColor('#666666')
+              .margin({ top: 4 })
+            Text('用神落宫·方位判断')
+              .fontSize(10)
+              .fontColor('#888888')
+              .margin({ top: 2 })
+          }
+          .layoutWeight(1)
+          .height(90)
+          .justifyContent(FlexAlign.Center)
+          .backgroundColor('#f5f9f6')
+          .borderRadius(14)
+          .border({ width: 2, color: '#3d6b4f' })
+
+          // 演禽盘式卡片
+          Column() {
+            Text('演禽盘式')
+              .fontSize(17)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#1a5276')
+            Text('完整排盘 · 精断')
+              .fontSize(11)
+              .fontColor('#666666')
+              .margin({ top: 4 })
+            Text('三传四课·锁泊十二宫')
+              .fontSize(10)
+              .fontColor('#888888')
+              .margin({ top: 2 })
+          }
+          .layoutWeight(1)
+          .height(90)
+          .justifyContent(FlexAlign.Center)
+          .backgroundColor('#e8f4fc')
+          .borderRadius(14)
+          .border({ width: 1, color: '#d4e6f1' })
+          .margin({ left: 12 })
+          .onClick(() => {
+            router.pushUrl({
+              url: 'pages/YanQinPanShi',
+              params: {
+                year: this.selectedYear,
+                month: this.selectedMonth,
+                day: this.selectedDay,
+                hourIndex: this.selectedHourIndex
+              }
+            });
+          })
+        }
+        .width('100%')
+        .padding({ left: 16, right: 16, bottom: 16 })
 
         if (this.hasLoaded && this.starRulesConfig && this.lostItemsConfig) {
           // ========== 日期时辰选择区 ==========
