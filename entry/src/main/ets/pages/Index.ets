@@ -893,17 +893,17 @@ struct Index {
 
         // ========== 功能入口双卡片 ==========
         Row() {
-          // 走失演寻卡片
+          // 方位推演卡片
           Column() {
-            Text('走失演寻')
+            Text('方位推演')
               .fontSize(17)
               .fontWeight(FontWeight.Bold)
               .fontColor('#2d5a3d')
-            Text('简易歌诀 · 速断')
+            Text('简易歌诀 · 速查')
               .fontSize(11)
               .fontColor('#666666')
               .margin({ top: 4 })
-            Text('用神落宫·方位判断')
+            Text('用神落宫·方位参考')
               .fontSize(10)
               .fontColor('#888888')
               .margin({ top: 2 })
@@ -921,7 +921,7 @@ struct Index {
               .fontSize(17)
               .fontWeight(FontWeight.Bold)
               .fontColor('#1a5276')
-            Text('完整排盘 · 精断')
+            Text('完整排盘 · 精研')
               .fontSize(11)
               .fontColor('#666666')
               .margin({ top: 4 })

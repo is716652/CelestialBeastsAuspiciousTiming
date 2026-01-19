@@ -505,94 +505,34 @@ struct YanQinPanShi {
         .margin({ bottom: 16 })
   
         if (this.hasLoaded && this.wuQinResult) {
-          // ========== 四课展示 ==========
+          // ========== 四课展示（禁星赋：日禽、时禽、翻禽、活曜） ==========
           Column() {
-            Text('【四课】')
-              .fontSize(14)
-              .fontWeight(FontWeight.Bold)
-              .fontColor('#555555')
-              .width('100%')
-              .margin({ bottom: 10 })
-  
+            Row() {
+              Text('【四课】')
+                .fontSize(14)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#555555')
+              Blank()
+              Text(`年禽:${this.wuQinResult.yearStar.star} 月禽:${this.wuQinResult.monthStar.star}`)
+                .fontSize(10)
+                .fontColor('#888888')
+            }
+            .width('100%')
+            .margin({ bottom: 10 })
+        
             // 四课网格
             Grid() {
               GridItem() {
                 Column() {
-                  Text('年禽')
+                  Text('一课')
                     .fontSize(10)
                     .fontColor('#888888')
-                  Text(this.wuQinResult.yearStar.star)
-                    .fontSize(16)
-                    .fontWeight(FontWeight.Bold)
-                    .fontColor('#2d5a3d')
-                    .margin({ top: 2 })
-                  Text(this.wuQinResult.yearStar.fullName)
-                    .fontSize(9)
-                    .fontColor('#666666')
-                    .margin({ top: 2 })
-                }
-                .width('100%')
-                .height('100%')
-                .justifyContent(FlexAlign.Center)
-                .backgroundColor('#f5f9f6')
-                .borderRadius(8)
-              }
-  
-              GridItem() {
-                Column() {
-                  Text('月禽')
-                    .fontSize(10)
-                    .fontColor('#888888')
-                  Text(this.wuQinResult.monthStar.star)
-                    .fontSize(16)
-                    .fontWeight(FontWeight.Bold)
-                    .fontColor('#2d5a3d')
-                    .margin({ top: 2 })
-                  Text(this.wuQinResult.monthStar.fullName)
-                    .fontSize(9)
-                    .fontColor('#666666')
-                    .margin({ top: 2 })
-                }
-                .width('100%')
-                .height('100%')
-                .justifyContent(FlexAlign.Center)
-                .backgroundColor('#f5f9f6')
-                .borderRadius(8)
-              }
-  
-              GridItem() {
-                Column() {
-                  Text('日禽')
-                    .fontSize(10)
-                    .fontColor('#ffffff')
                   Text(this.wuQinResult.dayStar.star)
-                    .fontSize(16)
-                    .fontWeight(FontWeight.Bold)
-                    .fontColor('#ffffff')
-                    .margin({ top: 2 })
-                  Text(this.wuQinResult.dayStar.fullName)
-                    .fontSize(9)
-                    .fontColor('#ffffffcc')
-                    .margin({ top: 2 })
-                }
-                .width('100%')
-                .height('100%')
-                .justifyContent(FlexAlign.Center)
-                .backgroundColor('#3d6b4f')
-                .borderRadius(8)
-              }
-  
-              GridItem() {
-                Column() {
-                  Text('将星')
-                    .fontSize(10)
-                    .fontColor('#888888')
-                  Text(this.jiangStar)
                     .fontSize(16)
                     .fontWeight(FontWeight.Bold)
                     .fontColor('#8b4513')
                     .margin({ top: 2 })
-                  Text(`值日将`)
+                  Text('日禽')
                     .fontSize(9)
                     .fontColor('#666666')
                     .margin({ top: 2 })
@@ -603,20 +543,86 @@ struct YanQinPanShi {
                 .backgroundColor('#fdf5e6')
                 .borderRadius(8)
               }
+        
+              GridItem() {
+                Column() {
+                  Text('二课')
+                    .fontSize(10)
+                    .fontColor('#888888')
+                  Text(this.wuQinResult.diQin.star)
+                    .fontSize(16)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#2d5a3d')
+                    .margin({ top: 2 })
+                  Text('时禽/我')
+                    .fontSize(9)
+                    .fontColor('#666666')
+                    .margin({ top: 2 })
+                }
+                .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
+                .backgroundColor('#e8f5e9')
+                .borderRadius(8)
+              }
+        
+              GridItem() {
+                Column() {
+                  Text('三课')
+                    .fontSize(10)
+                    .fontColor('#888888')
+                  Text(this.wuQinResult.tianQin.star)
+                    .fontSize(16)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#1a5276')
+                    .margin({ top: 2 })
+                  Text('翻禽/他')
+                    .fontSize(9)
+                    .fontColor('#666666')
+                    .margin({ top: 2 })
+                }
+                .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
+                .backgroundColor('#e3f2fd')
+                .borderRadius(8)
+              }
+        
+              GridItem() {
+                Column() {
+                  Text('四课')
+                    .fontSize(10)
+                    .fontColor('#888888')
+                  Text(this.wuQinResult.huoYao.star)
+                    .fontSize(16)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#6a1b9a')
+                    .margin({ top: 2 })
+                  Text('活曜/变')
+                    .fontSize(9)
+                    .fontColor('#666666')
+                    .margin({ top: 2 })
+                }
+                .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
+                .backgroundColor('#f3e5f5')
+                .borderRadius(8)
+              }
             }
             .columnsTemplate('1fr 1fr 1fr 1fr')
             .rowsTemplate('1fr')
             .columnsGap(8)
             .width('100%')
-            .height(70)
+            .height(75)
           }
           .width('100%')
           .padding(14)
           .backgroundColor('#ffffff')
           .borderRadius(14)
           .margin({ left: 16, right: 16, bottom: 12 })
-  
-          // ========== 三传展示（类似六壬） ==========
+        
+          // ========== 三传展示（禁星赋：日禽→时禽→翻禽） ==========
           Column() {
             Text('【三传】')
               .fontSize(14)
@@ -624,11 +630,49 @@ struct YanQinPanShi {
               .fontColor('#555555')
               .width('100%')
               .margin({ bottom: 10 })
-  
+        
             Row() {
-              // 初传：地禽(我)
+              // 初传：日禽（背景/大环境）
               Column() {
                 Text('初传')
+                  .fontSize(11)
+                  .fontColor('#666666')
+                Column() {
+                  Text(this.wuQinResult.dayStar.star)
+                    .fontSize(22)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#ffffff')
+                  Text(this.wuQinResult.dayStar.fullName)
+                    .fontSize(10)
+                    .fontColor('#ffffffcc')
+                    .margin({ top: 2 })
+                }
+                .width(60)
+                .height(60)
+                .justifyContent(FlexAlign.Center)
+                .backgroundColor('#8b4513')
+                .borderRadius(30)
+                .margin({ top: 6 })
+                Text('日禽')
+                  .fontSize(10)
+                  .fontColor('#8b4513')
+                  .margin({ top: 4 })
+                Text('彼我共用')
+                  .fontSize(9)
+                  .fontColor('#888888')
+              }
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Center)
+        
+              // 箭头
+              Text('→')
+                .fontSize(20)
+                .fontColor('#cccccc')
+                .margin({ top: 20 })
+        
+              // 中传：时禽/地禽（当前状态，代表我）
+              Column() {
+                Text('中传')
                   .fontSize(11)
                   .fontColor('#666666')
                 Column() {
@@ -647,7 +691,7 @@ struct YanQinPanShi {
                 .backgroundColor('#2d5a3d')
                 .borderRadius(30)
                 .margin({ top: 6 })
-                Text('地禽/我')
+                Text('时禽/我')
                   .fontSize(10)
                   .fontColor('#2d5a3d')
                   .margin({ top: 4 })
@@ -657,16 +701,16 @@ struct YanQinPanShi {
               }
               .layoutWeight(1)
               .alignItems(HorizontalAlign.Center)
-  
+        
               // 箭头
               Text('→')
                 .fontSize(20)
                 .fontColor('#cccccc')
                 .margin({ top: 20 })
-  
-              // 中传：天禽(他)
+        
+              // 末传：翻禽/天禽（结果，代表他）
               Column() {
-                Text('中传')
+                Text('末传')
                   .fontSize(11)
                   .fontColor('#666666')
                 Column() {
@@ -685,49 +729,11 @@ struct YanQinPanShi {
                 .backgroundColor('#1a5276')
                 .borderRadius(30)
                 .margin({ top: 6 })
-                Text('天禽/他')
+                Text('翻禽/他')
                   .fontSize(10)
                   .fontColor('#1a5276')
                   .margin({ top: 4 })
                 Text(this.tianQinType)
-                  .fontSize(9)
-                  .fontColor('#888888')
-              }
-              .layoutWeight(1)
-              .alignItems(HorizontalAlign.Center)
-  
-              // 箭头
-              Text('→')
-                .fontSize(20)
-                .fontColor('#cccccc')
-                .margin({ top: 20 })
-  
-              // 末传：活曜(变)
-              Column() {
-                Text('末传')
-                  .fontSize(11)
-                  .fontColor('#666666')
-                Column() {
-                  Text(this.wuQinResult.huoYao.star)
-                    .fontSize(22)
-                    .fontWeight(FontWeight.Bold)
-                    .fontColor('#ffffff')
-                  Text(this.wuQinResult.huoYao.fullName)
-                    .fontSize(10)
-                    .fontColor('#ffffffcc')
-                    .margin({ top: 2 })
-                }
-                .width(60)
-                .height(60)
-                .justifyContent(FlexAlign.Center)
-                .backgroundColor('#6a1b9a')
-                .borderRadius(30)
-                .margin({ top: 6 })
-                Text('活曜/变')
-                  .fontSize(10)
-                  .fontColor('#6a1b9a')
-                  .margin({ top: 4 })
-                Text(`属${this.wuQinResult.huoYao.element}`)
                   .fontSize(9)
                   .fontColor('#888888')
               }
