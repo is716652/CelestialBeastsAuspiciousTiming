@@ -314,7 +314,14 @@ struct YanQinPanShi {
   private calculateDayStar(year: number, month: number, day: number, cfg: YanqinStarRulesConfig): DayStarCalcResult {
     const constellations = cfg.constellations_order;
     const dayRules = cfg.day_star_rules;
-    const baseDate = new Date(dayRules.base_date.date);
+    // 解析基准日期字符串 "1984-02-02"
+    const baseDateStr = dayRules.base_date.date;
+    const baseParts = baseDateStr.split('-');
+    const baseYear = parseInt(baseParts[0]);
+    const baseMonth = parseInt(baseParts[1]);
+    const baseDay = parseInt(baseParts[2]);
+    // 统一使用本地时间创建 Date 对象，避免时区问题
+    const baseDate = new Date(baseYear, baseMonth - 1, baseDay);
     const targetDate = new Date(year, month - 1, day);
     const diffTime = targetDate.getTime() - baseDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
