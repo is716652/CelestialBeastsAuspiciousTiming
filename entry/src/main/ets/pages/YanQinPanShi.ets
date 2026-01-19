@@ -149,6 +149,13 @@ interface FeifuResultSimple {
   desc: string;
 }
 
+// 星宿物象信息
+interface StarImageryInfo {
+  imagery: string;
+  material: string;
+  examples: string;
+}
+
 @Entry
 @Component
 struct YanQinPanShi {
@@ -935,6 +942,36 @@ struct YanQinPanShi {
           .borderRadius(14)
           .margin({ left: 16, right: 16, bottom: 12 })
 
+          // ========== 星宿物象 ==========
+          Column() {
+            Text('【星宿物象】')
+              .fontSize(14)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#555555')
+              .width('100%')
+              .margin({ bottom: 6 })
+
+            Text('出自《射覆玄机赋》— 文化知识参考')
+              .fontSize(10)
+              .fontColor('#888888')
+              .width('100%')
+              .margin({ bottom: 10 })
+
+            // 地禽物象
+            this.StarImageryItem('地禽', this.wuQinResult.diQin.star, '#2d5a3d')
+
+            // 天禽物象
+            this.StarImageryItem('天禽', this.wuQinResult.tianQin.star, '#1a5276')
+
+            // 活曜物象
+            this.StarImageryItem('活曜', this.wuQinResult.huoYao.star, '#6a1b9a')
+          }
+          .width('100%')
+          .padding(14)
+          .backgroundColor('#f5f5f5')
+          .borderRadius(14)
+          .margin({ left: 16, right: 16, bottom: 12 })
+
           // 免责声明
           Text('∗ 以上内容仅供传统文化研习参考，不构成任何现实指导。')
             .fontSize(11)
@@ -1420,5 +1457,87 @@ struct YanQinPanShi {
     }
 
     return results.length > 0 ? results.join('；') : `${timeDesc}，禽星无明显昼夜属性`;
+  }
+
+  // ============== 星宿物象方法 ==============
+
+  // 星宿物象展示组件
+  @Builder
+  StarImageryItem(label: string, star: string, color: string) {
+    Column() {
+      Row() {
+        Text(label)
+          .fontSize(11)
+          .fontColor('#ffffff')
+          .backgroundColor(color)
+          .borderRadius(4)
+          .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+        Text(`${star}宿`)
+          .fontSize(12)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(color)
+          .margin({ left: 6 })
+        Text(`→ ${this.getStarImagery(star).imagery}`)
+          .fontSize(12)
+          .fontColor('#333333')
+          .margin({ left: 6 })
+      }
+      .width('100%')
+      .margin({ bottom: 4 })
+
+      Row() {
+        Text(`材质：${this.getStarImagery(star).material}`)
+          .fontSize(11)
+          .fontColor('#666666')
+        Text(`类例：${this.getStarImagery(star).examples}`)
+          .fontSize(11)
+          .fontColor('#666666')
+          .margin({ left: 12 })
+      }
+      .width('100%')
+      .padding({ left: 60 })
+    }
+    .width('100%')
+    .margin({ bottom: 10 })
+  }
+
+  // 获取星宿物象
+  private getStarImagery(star: string): StarImageryInfo {
+    const imageryMap = new Map<string, StarImageryInfo>([
+      ['角', { imagery: '雕刻精巧之物', material: '木质、绿色', examples: '木雕、竹器、绿色工艺品' }],
+      ['亢', { imagery: '首饰、尊贵物', material: '金属、白色', examples: '金饰、印章、贵重饰品' }],
+      ['氐', { imagery: '豆麦、瓦石', material: '土质、黄褐色', examples: '不圆不方之物、豆类容器' }],
+      ['房', { imagery: '契约、文书', material: '纸质、白色', examples: '合同、书信、印刷品' }],
+      ['心', { imagery: '诗词歌赋', material: '纸质、红色', examples: '文学作品、歌谱、音乐类' }],
+      ['尾', { imagery: '诗词歌赋', material: '纸质、红色', examples: '文学作品、唱词、印号' }],
+      ['箵', { imagery: '破损衣物', material: '布质、黑色', examples: '旧衣、破布、纸币' }],
+      ['斗', { imagery: '雕刻精巧之物', material: '木质、绿色', examples: '木器、竹制品' }],
+      ['牛', { imagery: '钱财、金银', material: '金属、白色', examples: '钱币、金银器皿、财宝' }],
+      ['女', { imagery: '豆麦、瓦石', material: '土质、黄色', examples: '不圆不方之物、石器' }],
+      ['虚', { imagery: '文书、词讼', material: '纸质、白色', examples: '官方文书、诉状、契约' }],
+      ['危', { imagery: '美至大吉', material: '布质、黑色', examples: '美观物品、硬币、印章' }],
+      ['室', { imagery: '猪形物品', material: '土质、黑色', examples: '猪形器皿、陶器' }],
+      ['壁', { imagery: '文书、字画', material: '纸质、白色', examples: '书籍、字画、壁挂' }],
+      ['奈', { imagery: '雕刻精巧之物', material: '木质、白色', examples: '精美工艺品、狼形器物' }],
+      ['娄', { imagery: '狗形物品', material: '金属、白色', examples: '狗形器皿、金属器具' }],
+      ['胃', { imagery: '谷米、瓦缸石器', material: '土质、黄色', examples: '米缸、石器、陶罐' }],
+      ['昂', { imagery: '鸡形物品', material: '金属、白色', examples: '鸡形器皿、羽毛制品' }],
+      ['毕', { imagery: '字画、朱赤印号', material: '纸质、红色', examples: '字画、印章、朱砂制品' }],
+      ['觜', { imagery: '宝玉', material: '玉石、绿色', examples: '玉器、翡翠、宝石' }],
+      ['参', { imagery: '绸缎', material: '丝绸、白色', examples: '绸布、缎缚、精美布料' }],
+      ['井', { imagery: '破旧木器', material: '木质、黄色', examples: '井栏、木桶、破旧木器' }],
+      ['鬼', { imagery: '破损铜铁器', material: '金属、黑色', examples: '破损铜器、铁器、旧金属' }],
+      ['柳', { imagery: '谷米、瓦缸石器', material: '土质、黄色', examples: '米缸、石器、陶罐' }],
+      ['星', { imagery: '音乐乐器', material: '木质、红色', examples: '乐器、音乐盒、马形物品' }],
+      ['张', { imagery: '契约、文书', material: '纸质、红色', examples: '合同、文书、美观之物' }],
+      ['翼', { imagery: '宝玉、朱赤印号', material: '玉石、红色', examples: '红色宝石、印章、蛇形物' }],
+      ['轸', { imagery: '破损破衣物', material: '布质、黑色', examples: '旧衣、破布、蛓蛓形物' }]
+    ]);
+
+    const result = imageryMap.get(star);
+    if (result) {
+      return result;
+    }
+    return { imagery: '普通物品', material: '不详', examples: '无特殊象义' } as StarImageryInfo;
   }
 }
