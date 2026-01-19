@@ -757,10 +757,10 @@ struct YanQinPanShi {
               .width('100%')
               .margin({ bottom: 10 })
   
-            // 十二宫图形布局 (4x3)
+            // 十二宫图形布局 (4x4) - 上南下北，左东右西
             Grid() {
-              // 第一行：巳、午、未、申
-              GridItem() { this.SuoBoPalace('巳', '汤', 3) }
+              // 第一行（南）：巳、午、未、申
+              GridItem() { this.SuoBoPalace('巳', '汤', 5) }
               GridItem() { this.SuoBoPalace('午', '火', 6) }
               GridItem() { this.SuoBoPalace('未', '野', 7) }
               GridItem() { this.SuoBoPalace('申', '刀', 8) }
@@ -769,16 +769,16 @@ struct YanQinPanShi {
               GridItem() { this.CenterPalace() }
               GridItem() { this.CenterPalace2() }
               GridItem() { this.SuoBoPalace('酉', '砧', 9) }
-              // 第三行：卯、寅、丑、子、亥、戌
-              GridItem() { this.SuoBoPalace('卯', '林', 5) }
+              // 第三行：卯、中宫、中宫、戌
+              GridItem() { this.SuoBoPalace('卯', '林', 3) }
+              GridItem() { this.CenterPalace3() }
+              GridItem() { this.CenterPalace4() }
+              GridItem() { this.SuoBoPalace('戌', '路', 10) }
+              // 第四行（北）：寅、丑、子、亥
               GridItem() { this.SuoBoPalace('寅', '山', 2) }
               GridItem() { this.SuoBoPalace('丑', '田', 1) }
               GridItem() { this.SuoBoPalace('子', '湖', 0) }
-              // 第四行：空、空、亥、戌
-              GridItem() { this.EmptyPalace() }
-              GridItem() { this.EmptyPalace() }
               GridItem() { this.SuoBoPalace('亥', '江', 11) }
-              GridItem() { this.SuoBoPalace('戌', '路', 10) }
             }
             .columnsTemplate('1fr 1fr 1fr 1fr')
             .rowsTemplate('1fr 1fr 1fr 1fr')
@@ -953,6 +953,50 @@ struct YanQinPanShi {
     .height('100%')
     .justifyContent(FlexAlign.Center)
     .backgroundColor('#e3f2fd')
+    .borderRadius(6)
+  }
+
+  // 中宫左下：活曜信息
+  @Builder
+  CenterPalace3() {
+    Column() {
+      Text('活曜')
+        .fontSize(10)
+        .fontColor('#6a1b9a')
+      Text(this.wuQinResult?.huoYao.star || '')
+        .fontSize(14)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#6a1b9a')
+      Text(this.huoYaoSuoBo?.geName || '')
+        .fontSize(9)
+        .fontColor('#666666')
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor('#f3e5f5')
+    .borderRadius(6)
+  }
+
+  // 中宫右下：日禽信息
+  @Builder
+  CenterPalace4() {
+    Column() {
+      Text('日禽')
+        .fontSize(10)
+        .fontColor('#8b4513')
+      Text(this.wuQinResult?.dayStar.star || '')
+        .fontSize(14)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#8b4513')
+      Text(`${this.yuanName}`)
+        .fontSize(9)
+        .fontColor('#666666')
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor('#fdf5e6')
     .borderRadius(6)
   }
   
