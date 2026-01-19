@@ -850,6 +850,91 @@ struct YanQinPanShi {
           .borderRadius(14)
           .margin({ left: 16, right: 16, bottom: 12 })
   
+          // ========== 禽机赋断语 ==========
+          Column() {
+            Text('【禽机赋断语】')
+              .fontSize(14)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#555555')
+              .width('100%')
+              .margin({ bottom: 10 })
+
+            // 禽星属性
+            Text(`◎ 禽星属性`)
+              .fontSize(12)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#333333')
+              .width('100%')
+              .margin({ bottom: 6 })
+
+            Text(`· 地禽 ${this.wuQinResult.diQin.star}：${this.getQinAttribute(this.wuQinResult.diQin.star)}`)
+              .fontSize(12)
+              .fontColor('#444444')
+              .width('100%')
+              .margin({ bottom: 4 })
+
+            Text(`· 天禽 ${this.wuQinResult.tianQin.star}：${this.getQinAttribute(this.wuQinResult.tianQin.star)}`)
+              .fontSize(12)
+              .fontColor('#444444')
+              .width('100%')
+              .margin({ bottom: 4 })
+
+            Text(`· 活曜 ${this.wuQinResult.huoYao.star}：${this.getQinAttribute(this.wuQinResult.huoYao.star)}`)
+              .fontSize(12)
+              .fontColor('#444444')
+              .width('100%')
+              .margin({ bottom: 10 })
+
+            // 得地/失陷判断
+            Text(`◎ 得地失陷`)
+              .fontSize(12)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#333333')
+              .width('100%')
+              .margin({ bottom: 6 })
+
+            Text(`${this.getDeDeJudgment()}`)
+              .fontSize(12)
+              .fontColor('#444444')
+              .width('100%')
+              .margin({ bottom: 10 })
+
+            // 特殊格局
+            if (this.getSpecialPattern()) {
+              Text(`◎ 特殊格局`)
+                .fontSize(12)
+                .fontWeight(FontWeight.Medium)
+                .fontColor('#333333')
+                .width('100%')
+                .margin({ bottom: 6 })
+
+              Text(`${this.getSpecialPattern()}`)
+                .fontSize(12)
+                .fontColor('#c62828')
+                .fontWeight(FontWeight.Medium)
+                .width('100%')
+                .margin({ bottom: 10 })
+            }
+
+            // 昼夜规则
+            Text(`◎ 昼夜动静`)
+              .fontSize(12)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#333333')
+              .width('100%')
+              .margin({ bottom: 6 })
+
+            Text(`${this.getDayNightRule()}`)
+              .fontSize(12)
+              .fontColor('#444444')
+              .width('100%')
+          }
+          .width('100%')
+          .padding(14)
+          .backgroundColor('#fffbf0')
+          .borderRadius(14)
+          .margin({ left: 16, right: 16, bottom: 12 })
+
           // 免责声明
           Text('∗ 以上内容仅供传统文化研习参考，不构成任何现实指导。')
             .fontSize(11)
@@ -1133,5 +1218,207 @@ struct YanQinPanShi {
     }
     .width('100%')
     .margin({ bottom: 8 })
+  }
+
+  // ============== 禽机赋断语方法 ==============
+
+  // 获取禽星属性（日禽/夜禽/水禽/山禽等）
+  private getQinAttribute(star: string): string {
+    // 日禽：鸡、雉、燕、乌、蛇
+    const dayBirds = ['昂', '胃', '危', '毕', '翼'];
+    // 夜禽：鼠、蝠、貉、狐
+    const nightBirds = ['虚', '女', '氐', '心'];
+    // 水禽：蛟、龙、貔、蛓
+    const waterBirds = ['角', '亢', '壁', '轸'];
+    // 山禽：虎、豹、狼、猴、猿、獐、鹿
+    const mountainBirds = ['尾', '箵', '奈', '觜', '参', '柳', '张'];
+    // 家禽：牛、猪、羊、马、狗、鸡
+    const farmBirds = ['牛', '室', '鬼', '星', '娄', '昂'];
+
+    const attrs: Array<string> = [];
+    if (dayBirds.includes(star)) attrs.push('日禽（昼飞夜宿）');
+    if (nightBirds.includes(star)) attrs.push('夜禽（昼潜夜动）');
+    if (waterBirds.includes(star)) attrs.push('水禽（宜江湖）');
+    if (mountainBirds.includes(star)) attrs.push('山禽（宜山林）');
+    if (farmBirds.includes(star)) attrs.push('家禽（宜平地）');
+
+    return attrs.length > 0 ? attrs.join('、') : '普通禽星';
+  }
+
+  // 得地/失陷判断
+  private getDeDeJudgment(): string {
+    const results: Array<string> = [];
+
+    // 地禽判断
+    if (this.diQinSuoBo) {
+      const diResult = this.judgeDeDeByRule(this.wuQinResult!.diQin.star, this.diQinSuoBo.branch);
+      if (diResult) results.push(`地禽${diResult}`);
+    }
+
+    // 天禽判断
+    if (this.tianQinSuoBo) {
+      const tianResult = this.judgeDeDeByRule(this.wuQinResult!.tianQin.star, this.tianQinSuoBo.branch);
+      if (tianResult) results.push(`天禽${tianResult}`);
+    }
+
+    // 活曜判断
+    if (this.huoYaoSuoBo) {
+      const huoResult = this.judgeDeDeByRule(this.wuQinResult!.huoYao.star, this.huoYaoSuoBo.branch);
+      if (huoResult) results.push(`活曜${huoResult}`);
+    }
+
+    return results.length > 0 ? results.join('；') : '未发现明显得地或失陷';
+  }
+
+  // 根据禄机赋规则判断得地失陷
+  private judgeDeDeByRule(star: string, branch: string): string {
+    // 水禽得水
+    const waterBirds = ['角', '亢', '壁', '轸'];
+    const waterBranches = ['亥', '子'];
+    if (waterBirds.includes(star) && waterBranches.includes(branch)) {
+      return `${star}泊${branch}：得地（蛟龙得水，如鱼得水）`;
+    }
+
+    // 山禽得山
+    const mountainBirds = ['尾', '箵', '奈', '觜', '参', '柳', '张'];
+    const mountainBranches = ['寅', '卯'];
+    if (mountainBirds.includes(star) && mountainBranches.includes(branch)) {
+      return `${star}泊${branch}：得地（虎豹入山林，威风凛凛）`;
+    }
+
+    // 虎狼不下水
+    const tigerWolf = ['尾', '箵', '奈'];
+    if (tigerWolf.includes(star) && waterBranches.includes(branch)) {
+      return `${star}泊${branch}：失陷（虎狼不下水）`;
+    }
+
+    // 蛟龙不上山
+    const dragons = ['角', '亢'];
+    if (dragons.includes(star) && mountainBranches.includes(branch)) {
+      return `${star}泊${branch}：失陷（蛟龙不上山）`;
+    }
+
+    // 猪羊忌江湖
+    const pigSheep = ['室', '鬼'];
+    if (pigSheep.includes(star) && waterBranches.includes(branch)) {
+      return `${star}泊${branch}：失陷（猪羊须忌江湖）`;
+    }
+
+    // 家禽得田
+    const farmBirds = ['牛', '室', '鬼', '星', '娄', '昂'];
+    const farmBranches = ['丑', '未'];
+    if (farmBirds.includes(star) && farmBranches.includes(branch)) {
+      return `${star}泊${branch}：得地（家禽宜居平地）`;
+    }
+
+    // 禽入刀砧
+    const knifeBranches = ['午', '未', '申', '酉'];
+    if (knifeBranches.includes(branch)) {
+      return `${star}泊${branch}：注意（禽入刀砧，恐有损伤）`;
+    }
+
+    return '';
+  }
+
+  // 获取特殊格局
+  private getSpecialPattern(): string {
+    const patterns: Array<string> = [];
+
+    // 检查井木犴特殊能力
+    const allStars = [
+      this.wuQinResult?.diQin.star,
+      this.wuQinResult?.tianQin.star,
+      this.wuQinResult?.huoYao.star
+    ];
+
+    if (allStars.includes('井')) {
+      const jingBranch = this.getStarBranch('井');
+      if (jingBranch === '未' || jingBranch === '寅') {
+        patterns.push('井木犴司权：上山食虎豹，下水食蛟龙，破万兵之力！');
+      }
+    }
+
+    // 检查心月狐克鸡
+    if (allStars.includes('心') && allStars.includes('昂')) {
+      patterns.push('心月狐克鸡：鸡怕心月狐食！');
+    }
+
+    // 检查寅宫虎威
+    if (allStars.includes('尾')) {
+      const weiBranch = this.getStarBranch('尾');
+      if (weiBranch === '寅') {
+        patterns.push('虎居寅宫：走兽避之，司权之地！');
+      }
+    }
+
+    // 检查未上鹰威
+    if (allStars.includes('张')) {
+      const zhangBranch = this.getStarBranch('张');
+      if (zhangBranch === '未') {
+        patterns.push('未上藏鹰：飞禽不过，司权之地！');
+      }
+    }
+
+    // 检查燕入辰反食蛟龙
+    if (allStars.includes('危')) {
+      const weiBranch = this.getStarBranch('危');
+      if (weiBranch === '辰' && (allStars.includes('角') || allStars.includes('亢'))) {
+        patterns.push('燕入辰反食蛟龙：弱胜强之象！');
+      }
+    }
+
+    return patterns.join('；');
+  }
+
+  // 获取某禽星的落宫
+  private getStarBranch(star: string): string {
+    if (this.wuQinResult?.diQin.star === star && this.diQinSuoBo) {
+      return this.diQinSuoBo.branch;
+    }
+    if (this.wuQinResult?.tianQin.star === star && this.tianQinSuoBo) {
+      return this.tianQinSuoBo.branch;
+    }
+    if (this.wuQinResult?.huoYao.star === star && this.huoYaoSuoBo) {
+      return this.huoYaoSuoBo.branch;
+    }
+    return '';
+  }
+
+  // 获取昼夜规则判断
+  private getDayNightRule(): string {
+    const results: Array<string> = [];
+    const currentHour = new Date().getHours();
+    const isDaytime = currentHour >= 6 && currentHour < 18;
+    const timeDesc = isDaytime ? '当前为昼间' : '当前为夜间';
+
+    // 日禽：昼飞夜宿
+    const dayBirds = ['昂', '胃', '危', '毕', '翼'];
+    // 夜禽：昼潜夜动
+    const nightBirds = ['虚', '女', '氐', '心'];
+
+    const checkStar = (label: string, star: string) => {
+      if (dayBirds.includes(star)) {
+        if (isDaytime) {
+          results.push(`${label}${star}为日禽，${timeDesc}，当飞动活跃`);
+        } else {
+          results.push(`${label}${star}为日禽，${timeDesc}，当潜藏不动`);
+        }
+      }
+      if (nightBirds.includes(star)) {
+        if (!isDaytime) {
+          results.push(`${label}${star}为夜禽，${timeDesc}，当活动出没`);
+        } else {
+          results.push(`${label}${star}为夜禽，${timeDesc}，当隐伏不动`);
+        }
+      }
+    };
+
+    if (this.wuQinResult) {
+      checkStar('地禽', this.wuQinResult.diQin.star);
+      checkStar('天禽', this.wuQinResult.tianQin.star);
+      checkStar('活曜', this.wuQinResult.huoYao.star);
+    }
+
+    return results.length > 0 ? results.join('；') : `${timeDesc}，禽星无明显昼夜属性`;
   }
 }
