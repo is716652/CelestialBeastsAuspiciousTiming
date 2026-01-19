@@ -891,18 +891,69 @@ struct YanQinPanShi {
     .borderRadius(6)
   }
 
-  // 锁泊宫位组件
+  // 锁泊宫位组件 - 天地盘双层展示
   @Builder
   SuoBoPalace(branch: string, env: string, branchIndex: number) {
     Column() {
+      // 地支+环境名
       Text(`${branch}${env}`)
-        .fontSize(11)
+        .fontSize(10)
         .fontColor('#555555')
-      Text(this.getStarInBranch(branchIndex))
-        .fontSize(13)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.getStarColor(branchIndex))
-        .margin({ top: 2 })
+        .margin({ bottom: 2 })
+      
+      // 天盘（翻禽）
+      if (this.getStarInBranchByType(branchIndex, 'tian')) {
+        Row() {
+          Text('天')
+            .fontSize(8)
+            .fontColor('#ffffff')
+            .backgroundColor('#1a5276')
+            .borderRadius(2)
+            .padding({ left: 2, right: 2 })
+          Text(this.getStarInBranchByType(branchIndex, 'tian'))
+            .fontSize(10)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#1a5276')
+            .margin({ left: 2 })
+        }
+        .justifyContent(FlexAlign.Center)
+      }
+      
+      // 地盘（时禽）
+      if (this.getStarInBranchByType(branchIndex, 'di')) {
+        Row() {
+          Text('地')
+            .fontSize(8)
+            .fontColor('#ffffff')
+            .backgroundColor('#2d5a3d')
+            .borderRadius(2)
+            .padding({ left: 2, right: 2 })
+          Text(this.getStarInBranchByType(branchIndex, 'di'))
+            .fontSize(10)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#2d5a3d')
+            .margin({ left: 2 })
+        }
+        .justifyContent(FlexAlign.Center)
+      }
+      
+      // 人盘（活曜）
+      if (this.getStarInBranchByType(branchIndex, 'huo')) {
+        Row() {
+          Text('人')
+            .fontSize(8)
+            .fontColor('#ffffff')
+            .backgroundColor('#6a1b9a')
+            .borderRadius(2)
+            .padding({ left: 2, right: 2 })
+          Text(this.getStarInBranchByType(branchIndex, 'huo'))
+            .fontSize(10)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#6a1b9a')
+            .margin({ left: 2 })
+        }
+        .justifyContent(FlexAlign.Center)
+      }
     }
     .width('100%')
     .height('100%')
@@ -1000,7 +1051,24 @@ struct YanQinPanShi {
     .borderRadius(6)
   }
   
-  // 获取某宫位中的禽星
+  // 获取某宫位中指定类型的禽星
+  private getStarInBranchByType(branchIndex: number, type: string): string {
+    const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+    const branch = branches[branchIndex];
+    
+    if (type === 'tian' && this.tianQinSuoBo && this.tianQinSuoBo.branch === branch) {
+      return this.tianQinSuoBo.star;
+    }
+    if (type === 'di' && this.diQinSuoBo && this.diQinSuoBo.branch === branch) {
+      return this.diQinSuoBo.star;
+    }
+    if (type === 'huo' && this.huoYaoSuoBo && this.huoYaoSuoBo.branch === branch) {
+      return this.huoYaoSuoBo.star;
+    }
+    return '';
+  }
+
+  // 获取某宫位中的禽星（兼容旧版）
   private getStarInBranch(branchIndex: number): string {
     if (!this.diQinSuoBo && !this.tianQinSuoBo && !this.huoYaoSuoBo) return '';
     const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
@@ -1018,15 +1086,9 @@ struct YanQinPanShi {
     return stars.join(',');
   }
   
-  // 获取禽星颜色
+  // 获取禽星颜色（兼容旧版）
   private getStarColor(branchIndex: number): string {
-    if (!this.diQinSuoBo && !this.tianQinSuoBo && !this.huoYaoSuoBo) return '#888888';
-    const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-    const branch = branches[branchIndex];
-    if (this.diQinSuoBo && this.diQinSuoBo.branch === branch) return '#2d5a3d';
-    if (this.tianQinSuoBo && this.tianQinSuoBo.branch === branch) return '#1a5276';
-    if (this.huoYaoSuoBo && this.huoYaoSuoBo.branch === branch) return '#6a1b9a';
-    return '#888888';
+    return '#333333';
   }
   
   // 获取宫位背景色
