@@ -1,6 +1,8 @@
 // 高级研习 · 案例库 示例页面（官司场景 · 十三退趋势研习示例）
 // 本页面使用模拟数据，仅用于术数文化研习与交互参考，不参与正式演算逻辑。
 
+import { MiniQinDisk, MiniPalaceData, MiniThreePassData } from '../components/MiniQinDisk';
+
 interface LawsuitStateConfig {
   label: string;       // 状态名称：进中进 / 进中退 / 退中进 / 退中退
   safeSummary: string; // 安全总结，用于正式 UI 展示
@@ -70,62 +72,6 @@ struct AdvancedStudyCases {
     this.showDialog = false;
   }
 
-  // ============== 简易可视化小盘组件 ==============
-
-  @Builder
-  ThreePassItemMini(label: string, star: string, bgColor: string) {
-    Column() {
-      Text(label)
-        .fontSize(9)
-        .fontColor('#888888')
-      Column() {
-        Text(star)
-          .fontSize(14)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#ffffff')
-      }
-      .width(36)
-      .height(36)
-      .justifyContent(FlexAlign.Center)
-      .backgroundColor(bgColor)
-      .borderRadius(18)
-      .margin({ top: 4 })
-    }
-    .alignItems(HorizontalAlign.Center)
-  }
-
-  @Builder
-  SuoBoPalaceMini(branch: string, env: string, star: string = '') {
-    Column() {
-      Row() {
-        Text(branch)
-          .fontSize(10)
-          .fontColor('#ffffff')
-          .fontWeight(FontWeight.Bold)
-        Text(env)
-          .fontSize(9)
-          .fontColor('#ffffffcc')
-          .margin({ left: 2 })
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.Center)
-      .backgroundColor('#1a5276')
-      .padding({ top: 2, bottom: 2 })
-
-      if (star) {
-        Text(star)
-          .fontSize(12)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#c62828')
-          .margin({ top: 4 })
-      }
-    }
-    .width('100%')
-    .height(44)
-    .backgroundColor('#ffffff')
-    .border({ width: 0.5, color: '#dddddd' })
-  }
-
   build() {
     Stack() {
       // 主体内容
@@ -163,46 +109,20 @@ struct AdvancedStudyCases {
             .width('100%')
             .margin({ bottom: 12 })
 
-            Row() {
-              // 左侧：三传小图
-              Column() {
-                Text('【三传概览】')
-                  .fontSize(10)
-                  .fontColor('#555555')
-                  .margin({ bottom: 8 })
-                Row() {
-                  this.ThreePassItemMini('初传', '心', '#8b4513')
-                  Text('→').fontSize(12).fontColor('#cccccc').margin({ left: 4, right: 4, top: 12 })
-                  this.ThreePassItemMini('中传', '星', '#2d5a3d')
-                  Text('→').fontSize(12).fontColor('#cccccc').margin({ left: 4, right: 4, top: 12 })
-                  this.ThreePassItemMini('末传', '奎', '#1a5276')
-                }
-              }
-              .layoutWeight(1)
-              .alignItems(HorizontalAlign.Start)
-
-              // 右侧：锁泊小图 (简化版，仅显示关键宫位)
-              Column() {
-                Text('【关键落宫】')
-                  .fontSize(10)
-                  .fontColor('#555555')
-                  .margin({ bottom: 8 })
-                Grid() {
-                  GridItem() { this.SuoBoPalaceMini('申', '刀', '星') } // 龙落砧板
-                  GridItem() { this.SuoBoPalaceMini('寅', '山', '奎') } // 文星登高
-                  GridItem() { this.SuoBoPalaceMini('巳', '汤') }
-                  GridItem() { this.SuoBoPalaceMini('亥', '江') }
-                }
-                .columnsTemplate('1fr 1fr')
-                .rowsTemplate('1fr 1fr')
-                .columnsGap(2)
-                .rowsGap(2)
-                .width(100)
-                .height(90)
-              }
-              .alignItems(HorizontalAlign.End)
-            }
-            .width('100%')
+            // 使用组件化的微缩盘
+            MiniQinDisk({
+              threePass: {
+                chu: '心', chuColor: '#8b4513',
+                zhong: '星', zhongColor: '#2d5a3d',
+                mo: '奎', moColor: '#1a5276'
+              },
+              palaces: [
+                { branch: '申', env: '刀', star: '星' },
+                { branch: '寅', env: '山', star: '奎' },
+                { branch: '巳', env: '汤' },
+                { branch: '亥', env: '江' }
+              ]
+            })
             .margin({ bottom: 12 })
 
             Divider().color('#eeeeee').margin({ bottom: 10 })

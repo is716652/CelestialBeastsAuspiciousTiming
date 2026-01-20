@@ -1,6 +1,7 @@
 import { common } from '@kit.AbilityKit';
 import { buffer, JSON as ArkJSON } from '@kit.ArkTS';
 import { router } from '@kit.ArkUI';
+import { CalendarManager, CalendarDayInfo } from '../utils/CalendarManager';
 
 // ============== 接口定义 ==============
 
@@ -287,6 +288,7 @@ struct Index {
 
   // 四禽计算结果
   @State fourStars: FourStarsResult | null = null;
+  @State dayInfo: CalendarDayInfo | null = null;
 
   // 排盘结果
   @State resultKey: string = '';
@@ -319,6 +321,7 @@ struct Index {
 
   aboutToAppear(): void {
     this.initOptions();
+    CalendarManager.getInstance().init(this.context);
     this.initData();
   }
 
@@ -395,7 +398,7 @@ struct Index {
 
   // ============== 四禽计算算法 ==============
 
-  private calculateFourStars(): void {
+  private async calculateFourStars(): Promise<void> {
     if (!this.starRulesConfig) return;
 
     const cfg = this.starRulesConfig;
@@ -422,6 +425,9 @@ struct Index {
       jiangStar: dayResult.jiangStar
     };
     this.fourStars = result;
+
+    // 异步获取万年历信息
+    this.dayInfo = await CalendarManager.getInstance().getDayInfo(this.selectedYear, this.selectedMonth, this.selectedDay);
   }
 
   private calculateYearStar(year: number, cfg: YanqinStarRulesConfig): StarCalcResult {
@@ -1066,6 +1072,32 @@ struct Index {
                 this.calculateFourStars();
                 this.showResult = false;
               })
+
+            // 显示万年历详细信息
+            if (this.dayInfo) {
+              Row() {
+                Text(`农历：${this.dayInfo.lunar_month}月${this.dayInfo.lunar_day} · ${this.dayInfo.year_gan}${this.dayInfo.year_zhi}年 · ${this.dayInfo.zodiac} · ${this.dayInfo.week_name}`)
+                  .fontSize(12)
+                  .fontColor('#4caf50')
+                  .fontWeight(FontWeight.Medium)
+                if (this.dayInfo.solar_term) {
+                  Text(` · ${this.dayInfo.solar_term}`)
+                    .fontSize(12)
+                    .fontColor('#ff9800')
+                    .fontWeight(FontWeight.Bold)
+                    .margin({ left: 4 })
+                }
+                if (this.dayInfo.festivals) {
+                  Text(` · ${this.dayInfo.festivals}`)
+                    .fontSize(12)
+                    .fontColor('#e91e63')
+                    .margin({ left: 4 })
+                }
+              }
+              .width('100%')
+              .margin({ top: 10 })
+              .padding({ left: 4 })
+            }
           }
           .width('100%')
           .padding(16)
