@@ -1,4 +1,4 @@
-// 高级研习 · 案例库 示例页面（官司场景 · 十三退趋势研习示例）
+// 高级研习 · 知识点&案例库（官司场景 · 十三退趋势研习示例）
 // 本页面使用模拟数据，仅用于术数文化研习与交互参考，不参与正式演算逻辑。
 
 import { MiniQinDisk, MiniPalaceData, MiniThreePassData } from '../components/MiniQinDisk';
