@@ -952,6 +952,41 @@ struct Index {
         .width('100%')
         .padding({ left: 16, right: 16, bottom: 16 })
 
+        // ========== 高级研习入口（案例库示例） ==========
+        Row() {
+          Column() {
+            Text('📚 高级研习 · 案例库 示例')
+              .fontSize(15)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#312e81')
+              .width('100%')
+              .margin({ bottom: 4 })
+
+            Text('收录官司等场景的演禽研习案例，使用模拟数据，仅供学习参考。')
+              .fontSize(11)
+              .fontColor('#4b5563')
+              .width('100%')
+          }
+          .layoutWeight(1)
+
+          Text('进入')
+            .fontSize(12)
+            .fontColor('#4c1d95')
+            .margin({ left: 8 })
+        }
+        .width('100%')
+        .height(72)
+        .padding({ left: 16, right: 16 })
+        .backgroundColor('#f5f3ff')
+        .borderRadius(14)
+        .margin({ left: 16, right: 16, bottom: 12 })
+        .border({ width: 1, color: '#ddd6fe' })
+        .onClick(() => {
+          router.pushUrl({
+            url: 'pages/AdvancedStudyCases'
+          });
+        })
+
         if (this.hasLoaded && this.starRulesConfig && this.lostItemsConfig) {
           // ========== 日期时辰选择区 ==========
           Column() {

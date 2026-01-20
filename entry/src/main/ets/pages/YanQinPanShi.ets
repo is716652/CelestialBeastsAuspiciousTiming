@@ -71,6 +71,52 @@ interface RiYeQinConfig {
   日夜通用: Array<string>;
 }
 
+interface StrengthTagsConfig {
+  base_branches: Record<string, Array<string>>;
+  strong_stars: Array<string>;
+}
+
+interface SanheGroupConfig {
+  id: string;
+  name: string;
+  stars: Array<string>;
+  tag: string;
+  safeSummary: string;
+}
+
+interface LiuhePairConfig {
+  id: string;
+  name: string;
+  stars: Array<string>;
+  safeSummary: string;
+}
+
+interface ComboRulesConfig {
+  sanhe_groups: Array<SanheGroupConfig>;
+  liuhe_pairs: Array<LiuhePairConfig>;
+}
+
+interface SeasonalSeasonInfo {
+  label: string;
+  branches: Array<string>;
+  stars: Array<string>;
+  safeSummary: string;
+}
+
+interface SeasonalHintsConfig {
+  seasons: Record<string, SeasonalSeasonInfo>;
+}
+
+interface NobleStarHintItem {
+  type: string;
+  label: string;
+  safeSummary: string;
+}
+
+interface NobleStarHintsConfig {
+  items: Record<string, NobleStarHintItem>;
+}
+
 interface YanqinStarRulesConfig {
   constellations_order: Array<string>;
   constellations_full: Record<string, ConstellationInfo>;
@@ -83,6 +129,10 @@ interface YanqinStarRulesConfig {
   qin_classification: QinClassification;
   tun_dan: TunDanConfig;
   ri_ye_qin: RiYeQinConfig;
+  strength_tags?: StrengthTagsConfig;
+  combo_rules?: ComboRulesConfig;
+  seasonal_hints?: SeasonalHintsConfig;
+  noble_star_hints?: NobleStarHintsConfig;
 }
 
 interface BranchEnvironment {
@@ -193,6 +243,10 @@ struct YanQinPanShi {
   // 三禽分类
   @State diQinType: string = '';
   @State tianQinType: string = '';
+  @State strengthTags: Array<string> = [];
+  @State comboHints: Array<string> = [];
+  @State seasonalHints: Array<string> = [];
+  @State nobleHints: Array<string> = [];
 
   aboutToAppear(): void {
     // 获取路由参数
@@ -292,6 +346,18 @@ struct YanQinPanShi {
     const feifuResult = this.judgeFeifu(hourResult.star, this.selectedHourIndex, cfg);
     this.feifuStatus = feifuResult.status;
     this.feifuDesc = feifuResult.desc;
+
+    // 7. 力量标签（入庙与强势星宿）
+    this.calculateStrengthTags(cfg);
+
+    // 8. 组合提示（三合/六合）
+    this.calculateComboHints();
+
+    // 9. 四季方位提示（魁星方简化）
+    this.calculateSeasonalHints(cfg);
+
+    // 10. 贵人宿提示
+    this.calculateNobleHints(cfg);
   }
 
   // ============== 四禽计算 ==============
@@ -453,6 +519,167 @@ struct YanQinPanShi {
       }
     }
     return result;
+  }
+
+  private calculateStrengthTags(cfg: YanqinStarRulesConfig): void {
+    const tags: Array<string> = [];
+    if (!this.wuQinResult || !cfg.strength_tags) {
+      this.strengthTags = tags;
+      return;
+    }
+
+    const baseBranches = cfg.strength_tags.base_branches;
+    const strongStars = cfg.strength_tags.strong_stars;
+
+    const pushTag = (label: string, star: string, branch: string) => {
+      if (!star || !branch) {
+        tags.push(`${label}：暂无位置信息`);
+        return;
+      }
+      const bases = baseBranches[star] || [];
+      const inBase = bases.includes(branch);
+      const isStrong = strongStars.includes(star);
+      const descParts: Array<string> = [];
+      if (inBase) {
+        descParts.push('临传统本位宫，发挥较充分');
+      }
+      if (isStrong) {
+        descParts.push('传统视作影响力较强的星宿');
+      }
+      if (descParts.length === 0) {
+        descParts.push('表现中性，可结合其他规则综合参考');
+      }
+      tags.push(`${label}${star}（${branch}宫）：${descParts.join('，')}`);
+    };
+
+    if (this.diQinSuoBo) {
+      pushTag('地禽', this.wuQinResult.diQin.star, this.diQinSuoBo.branch);
+    }
+    if (this.tianQinSuoBo) {
+      pushTag('天禽', this.wuQinResult.tianQin.star, this.tianQinSuoBo.branch);
+    }
+    if (this.huoYaoSuoBo) {
+      pushTag('活曜', this.wuQinResult.huoYao.star, this.huoYaoSuoBo.branch);
+    }
+
+    this.strengthTags = tags;
+  }
+
+  private calculateComboHints(): void {
+    const hints: Array<string> = [];
+    if (!this.wuQinResult || !this.starRulesConfig || !this.starRulesConfig.combo_rules) {
+      this.comboHints = hints;
+      return;
+    }
+
+    const comboRules = this.starRulesConfig.combo_rules;
+    const activeStars: Array<string> = [];
+    activeStars.push(this.wuQinResult.yearStar.star);
+    activeStars.push(this.wuQinResult.monthStar.star);
+    activeStars.push(this.wuQinResult.dayStar.star);
+    activeStars.push(this.wuQinResult.diQin.star);
+    activeStars.push(this.wuQinResult.tianQin.star);
+    activeStars.push(this.wuQinResult.huoYao.star);
+
+    const containsStar = (star: string) => activeStars.includes(star);
+
+    // 三合局提示
+    comboRules.sanhe_groups.forEach((group: SanheGroupConfig) => {
+      let count = 0;
+      group.stars.forEach((s: string) => {
+        if (containsStar(s)) {
+          count++;
+        }
+      });
+      if (count >= 2) {
+        hints.push(`组合【${group.name}】：当前出现 ${count} 宿（${group.stars.join('、')}），${group.safeSummary}`);
+      }
+    });
+
+    // 六合对提示
+    comboRules.liuhe_pairs.forEach((pair: LiuhePairConfig) => {
+      const a = pair.stars[0];
+      const b = pair.stars[1];
+      if (containsStar(a) && containsStar(b)) {
+        hints.push(`组合【${pair.name}】：包含 ${a} 与 ${b}，${pair.safeSummary}`);
+      }
+    });
+
+    this.comboHints = hints;
+  }
+
+  private calculateSeasonalHints(cfg: YanqinStarRulesConfig): void {
+    const hints: Array<string> = [];
+    if (!this.wuQinResult || !cfg.seasonal_hints) {
+      this.seasonalHints = hints;
+      return;
+    }
+
+    const month = this.selectedMonth;
+    let seasonKey = '';
+    if (month >= 3 && month <= 5) {
+      seasonKey = 'spring';
+    } else if (month >= 6 && month <= 8) {
+      seasonKey = 'summer';
+    } else if (month >= 9 && month <= 11) {
+      seasonKey = 'autumn';
+    } else {
+      seasonKey = 'winter';
+    }
+
+    const seasonInfo = cfg.seasonal_hints.seasons[seasonKey];
+    if (!seasonInfo) {
+      this.seasonalHints = hints;
+      return;
+    }
+
+    // 通用提示
+    hints.push(`当前节令：${seasonInfo.label}。${seasonInfo.safeSummary}`);
+
+    // 若时禽同时落在该季节推荐方位，则额外提示一条
+    if (this.diQinSuoBo && seasonInfo.branches.includes(this.diQinSuoBo.branch) && seasonInfo.stars.includes(this.wuQinResult.diQin.star)) {
+      hints.push(`地禽${this.wuQinResult.diQin.star}落在推荐方位（${this.diQinSuoBo.branch}宫），适合参考为当前主题布置环境或规划方向的提示。`);
+    }
+
+    this.seasonalHints = hints;
+  }
+
+  private calculateNobleHints(cfg: YanqinStarRulesConfig): void {
+    const hints: Array<string> = [];
+    if (!this.wuQinResult || !cfg.noble_star_hints) {
+      this.nobleHints = hints;
+      return;
+    }
+
+    const nobleItems = cfg.noble_star_hints.items;
+
+    const pushHintForStar = (roleLabel: string, star: string, branch: string) => {
+      const info = nobleItems[star];
+      if (!info) {
+        return;
+      }
+      const placeText = branch ? `（${branch}宫）` : '';
+      const text = `${roleLabel}${star}${placeText}：${info.label}，${info.safeSummary}`;
+      hints.push(text);
+    };
+
+    // 只取对解读更直观的四个角色：日禽、地禽、天禽、活曜
+    const dayStar = this.wuQinResult.dayStar.star;
+    if (nobleItems[dayStar]) {
+      pushHintForStar('日禽', dayStar, '');
+    }
+
+    if (this.diQinSuoBo && nobleItems[this.wuQinResult.diQin.star]) {
+      pushHintForStar('地禽', this.wuQinResult.diQin.star, this.diQinSuoBo.branch);
+    }
+    if (this.tianQinSuoBo && nobleItems[this.wuQinResult.tianQin.star]) {
+      pushHintForStar('天禽', this.wuQinResult.tianQin.star, this.tianQinSuoBo.branch);
+    }
+    if (this.huoYaoSuoBo && nobleItems[this.wuQinResult.huoYao.star]) {
+      pushHintForStar('活曜', this.wuQinResult.huoYao.star, this.huoYaoSuoBo.branch);
+    }
+
+    this.nobleHints = hints;
   }
 
   private getDateString(): string {
@@ -834,7 +1061,7 @@ struct YanQinPanShi {
               .fontColor('#555555')
               .width('100%')
               .margin({ bottom: 10 })
-  
+          
             Row() {
               Text(`时禽 ${this.wuQinResult.diQin.star}`)
                 .fontSize(13)
@@ -856,7 +1083,173 @@ struct YanQinPanShi {
           .backgroundColor('#ffffff')
           .borderRadius(14)
           .margin({ left: 16, right: 16, bottom: 12 })
-  
+          
+          // ========== 力量提示（入庙与强势星宿） ==========
+          if (this.strengthTags.length > 0) {
+            Column() {
+              Row() {
+                Text('⚡ 力量提示')
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#2e7d32')
+                Blank()
+                Text('入庙 · 本位 · 强势星一览')
+                  .fontSize(11)
+                  .fontColor('#4caf50')
+              }
+              .width('100%')
+              .margin({ bottom: 8 })
+
+              Text('根据传统入庙本位与强势星宿，标出当前盘中更容易被关注的位置，仅作文化研习参考。')
+                .fontSize(11)
+                .fontColor('#666666')
+                .width('100%')
+                .margin({ bottom: 8 })
+
+              ForEach(this.strengthTags, (item: string) => {
+                Row() {
+                  Text('●')
+                    .fontSize(10)
+                    .fontColor('#2e7d32')
+                  Text(item)
+                    .fontSize(12)
+                    .fontColor('#333333')
+                    .margin({ left: 4 })
+                }
+                .width('100%')
+                .margin({ bottom: 4 })
+              })
+            }
+            .width('100%')
+            .padding(14)
+            .backgroundColor('#f1f8e9')
+            .borderRadius(14)
+            .margin({ left: 16, right: 16, bottom: 12 })
+          }
+
+          // ========== 组合提示（三合 / 六合） ==========
+          if (this.comboHints.length > 0) {
+            Column() {
+              Row() {
+                Text('🤝 组合提示')
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#1565c0')
+                Blank()
+                Text('三合局 · 六合对')
+                  .fontSize(11)
+                  .fontColor('#1e88e5')
+              }
+              .width('100%')
+              .margin({ bottom: 8 })
+
+              Text('根据传统三合局与组合关系，提示盘中哪些星宿彼此呼应，仅作结构理解与文化研习参考。')
+                .fontSize(11)
+                .fontColor('#666666')
+                .width('100%')
+                .margin({ bottom: 8 })
+
+              ForEach(this.comboHints, (item: string) => {
+                Row() {
+                  Text('●')
+                    .fontSize(10)
+                    .fontColor('#1565c0')
+                  Text(item)
+                    .fontSize(12)
+                    .fontColor('#333333')
+                    .margin({ left: 4 })
+                }
+                .width('100%')
+                .margin({ bottom: 4 })
+              })
+            }
+            .width('100%')
+            .padding(14)
+            .backgroundColor('#e3f2fd')
+            .borderRadius(14)
+            .margin({ left: 16, right: 16, bottom: 12 })
+          }
+
+          // ========== 四季方位提示（魁星方简化） ==========
+          if (this.seasonalHints.length > 0) {
+            Column() {
+              Row() {
+                Text('🧭 四季方位提示')
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#ef6c00')
+                Blank()
+                Text('时令 · 方位参考')
+                  .fontSize(11)
+                  .fontColor('#fb8c00')
+              }
+              .width('100%')
+              .margin({ bottom: 8 })
+
+              ForEach(this.seasonalHints, (item: string) => {
+                Row() {
+                  Text('●')
+                    .fontSize(10)
+                    .fontColor('#ef6c00')
+                  Text(item)
+                    .fontSize(12)
+                    .fontColor('#333333')
+                    .margin({ left: 4 })
+                }
+                .width('100%')
+                .margin({ bottom: 4 })
+              })
+            }
+            .width('100%')
+            .padding(14)
+            .backgroundColor('#fff3e0')
+            .borderRadius(14)
+            .margin({ left: 16, right: 16, bottom: 12 })
+          }
+
+          // ========== 贵人宿提示 ==========
+          if (this.nobleHints.length > 0) {
+            Column() {
+              Row() {
+                Text('⭐ 贵人宿提示')
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#8e24aa')
+                Blank()
+                Text('角色倾向 · 协助氛围')
+                  .fontSize(11)
+                  .fontColor('#ab47bc')
+              }
+              .width('100%')
+              .margin({ bottom: 8 })
+
+              Text('根据传统禽星贵人宿，只描述角色倾向与协助氛围，用于文化研习参考。')
+                .fontSize(11)
+                .fontColor('#666666')
+                .width('100%')
+                .margin({ bottom: 8 })
+
+              ForEach(this.nobleHints, (item: string) => {
+                Row() {
+                  Text('●')
+                    .fontSize(10)
+                    .fontColor('#8e24aa')
+                  Text(item)
+                    .fontSize(12)
+                    .fontColor('#333333')
+                    .margin({ left: 4 })
+                }
+                .width('100%')
+                .margin({ bottom: 4 })
+              })
+            }
+            .width('100%')
+            .padding(14)
+            .backgroundColor('#f3e5f5')
+            .borderRadius(14)
+            .margin({ left: 16, right: 16, bottom: 12 })
+          }
+
           // ========== 禽机赋断语 ==========
           Column() {
             Text('【禽机赋断语】')

@@ -2,6 +2,7 @@
   "src": [
     "pages/Splash",
     "pages/Index",
-    "pages/YanQinPanShi"
+    "pages/YanQinPanShi",
+    "pages/AdvancedStudyCases"
   ]
 }
