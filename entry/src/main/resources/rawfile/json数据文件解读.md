@@ -23,7 +23,8 @@ CelestialBeastsAuspiciousTiming/
 │           ├── yanqin_star_rules.json       # ⭐ 四禽计算规则（核心）
 │           ├── lost_items_config.json       # 用神配置（象类→星宿映射）
 │           ├── lost_items_rules.json        # 断语规则库（132条）
-│           └── yanqin_meta_config.json      # 元配置（汇总）
+│           ├── yanqin_meta_config.json      # 元配置（汇总）
+│           └── yanqin_knowledge_15x.json    # 15.x 高阶规则研习知识库
 ├── 规则/                                     # 演禽术原始规则文档
 │   ├── 2. 起年禽诀.md
 │   ├── 3. 起月禽诀.md
@@ -42,6 +43,7 @@ CelestialBeastsAuspiciousTiming/
 | `yanqin_star_rules.json` | 四禽（年/月/日/时禽）计算规则 | - |
 | `lost_items_config.json` | 用神配置（13种象类→星宿映射） | 13条 |
 | `lost_items_rules.json` | 断语规则库（星宿在地支） | 132条 |
+| `yanqin_knowledge_15x.json` | 15.10~15.18 高阶规则的研习提示配置 | 若干标签 |
 | `calendar/*.json` | 万年历数据（1900-2061） | 17个文件 |
 
 ---
@@ -413,7 +415,27 @@ const dayStar = constellations_order[dayStarIndex];
 
 ---
 
-## 5. 演算链路说明
+## 5. 15.x 高阶规则知识库 `yanqin_knowledge_15x.json`
+
+用于承载 15.10~15.18 中适合“研习提示化”的时间趋势与盘面结构规则，供 Index 页和 YanQinPanShi 页生成中性、安全的标签卡片。
+
+- 文件路径：`entry/src/main/resources/rawfile/yanqin_knowledge_15x.json`
+- 主要结构：
+  - `time_trend`：基于万年历计算的时间趋势标签（十恶大败日、天地荒芜日、罗天大进退日、六甲进退伏起始日、将军箭方、时中将星）
+  - `pan_risk`：基于实际盘面的凶煞研习标签（无头星结构、六恶/大煞星组、刑害刀砧/汤火方、空亡/寡亡星组）
+- 与规则文档的对应关系：
+  - `time_trend.ten_evil` → 《15.10 活断  十恶大败日》
+  - `time_trend.huang_wu` → 《15.12 活断  天地荒芜-十二月天地荒芜大凶日》
+  - `time_trend.luotian` / `time_trend.general_arrow` / `time_trend.shi_zhong_jiangxing` → 《15.18 活断   李广将军箭-罗天大退日-大罗天大进日-进神退神时-时中将星》
+  - `time_trend.sixjia` → 《15.17 活断   六甲进退神》
+  - `pan_risk.liu_e_da_sha` → 《15.13 活断  禽中华盖方-六恶禽日-大煞六凶日》
+  - `pan_risk.wu_tou` → 《15.14 活断  七日凶星诀-七元无头星》
+  - `pan_risk.xinghai_tanghuo` → 《15.15 活断  灭没煞-百祸禽-刑害刀砧汤火-暗金伏断日时-伏断时》
+  - `pan_risk.kong_wang_group` → 《15.16 活断   空亡体系_禽中大空亡-旬中空亡-截路空亡-六甲空亡》
+
+> 说明：为控制 JSON 体积、防止内存压力，当前仅选取 15.10~15.18 中少量“标签级”规则，15.1~15.9 的大部分内容仍通过其他 JSON 或规则文档分阶段整合。
+
+## 6. 演算链路说明
 
 ### 走失演禽核心流程
 
@@ -435,7 +457,7 @@ const dayStar = constellations_order[dayStarIndex];
 
 ---
 
-## 6. 扩展规划
+## 7. 扩展规划
 
 ### 6.1 演禽盘式（待实现）
 
@@ -455,7 +477,7 @@ const dayStar = constellations_order[dayStarIndex];
 
 ---
 
-## 7. 开发备注
+## 8. 开发备注
 
 ### 数据来源
 - 起年禽诀、起月禽诀、起日禽诀、起时禽诀 → `yanqin_star_rules.json`
