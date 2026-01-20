@@ -70,6 +70,62 @@ struct AdvancedStudyCases {
     this.showDialog = false;
   }
 
+  // ============== 简易可视化小盘组件 ==============
+
+  @Builder
+  ThreePassItemMini(label: string, star: string, bgColor: string) {
+    Column() {
+      Text(label)
+        .fontSize(9)
+        .fontColor('#888888')
+      Column() {
+        Text(star)
+          .fontSize(14)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#ffffff')
+      }
+      .width(36)
+      .height(36)
+      .justifyContent(FlexAlign.Center)
+      .backgroundColor(bgColor)
+      .borderRadius(18)
+      .margin({ top: 4 })
+    }
+    .alignItems(HorizontalAlign.Center)
+  }
+
+  @Builder
+  SuoBoPalaceMini(branch: string, env: string, star: string = '') {
+    Column() {
+      Row() {
+        Text(branch)
+          .fontSize(10)
+          .fontColor('#ffffff')
+          .fontWeight(FontWeight.Bold)
+        Text(env)
+          .fontSize(9)
+          .fontColor('#ffffffcc')
+          .margin({ left: 2 })
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .backgroundColor('#1a5276')
+      .padding({ top: 2, bottom: 2 })
+
+      if (star) {
+        Text(star)
+          .fontSize(12)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#c62828')
+          .margin({ top: 4 })
+      }
+    }
+    .width('100%')
+    .height(44)
+    .backgroundColor('#ffffff')
+    .border({ width: 0.5, color: '#dddddd' })
+  }
+
   build() {
     Stack() {
       // 主体内容
@@ -92,42 +148,80 @@ struct AdvancedStudyCases {
           .width('100%')
           .padding({ top: 24, bottom: 12 })
 
-          // 示例案件：先给出前因与盘式概览
+          // 示例案件：可视化盘式 + 分析思路
           Column() {
-            Text('示例案件：合同纠纷（演示用）')
-              .fontSize(15)
+            Row() {
+              Text('示例案件：合同纠纷（演示盘）')
+                .fontSize(15)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#333333')
+              Blank()
+              Text('2024年四月初八 · 午时')
+                .fontSize(11)
+                .fontColor('#666666')
+            }
+            .width('100%')
+            .margin({ bottom: 12 })
+
+            Row() {
+              // 左侧：三传小图
+              Column() {
+                Text('【三传概览】')
+                  .fontSize(10)
+                  .fontColor('#555555')
+                  .margin({ bottom: 8 })
+                Row() {
+                  this.ThreePassItemMini('初传', '心', '#8b4513')
+                  Text('→').fontSize(12).fontColor('#cccccc').margin({ left: 4, right: 4, top: 12 })
+                  this.ThreePassItemMini('中传', '星', '#2d5a3d')
+                  Text('→').fontSize(12).fontColor('#cccccc').margin({ left: 4, right: 4, top: 12 })
+                  this.ThreePassItemMini('末传', '奎', '#1a5276')
+                }
+              }
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Start)
+
+              // 右侧：锁泊小图 (简化版，仅显示关键宫位)
+              Column() {
+                Text('【关键落宫】')
+                  .fontSize(10)
+                  .fontColor('#555555')
+                  .margin({ bottom: 8 })
+                Grid() {
+                  GridItem() { this.SuoBoPalaceMini('申', '刀', '星') } // 龙落砧板
+                  GridItem() { this.SuoBoPalaceMini('寅', '山', '奎') } // 文星登高
+                  GridItem() { this.SuoBoPalaceMini('巳', '汤') }
+                  GridItem() { this.SuoBoPalaceMini('亥', '江') }
+                }
+                .columnsTemplate('1fr 1fr')
+                .rowsTemplate('1fr 1fr')
+                .columnsGap(2)
+                .rowsGap(2)
+                .width(100)
+                .height(90)
+              }
+              .alignItems(HorizontalAlign.End)
+            }
+            .width('100%')
+            .margin({ bottom: 12 })
+
+            Divider().color('#eeeeee').margin({ bottom: 10 })
+
+            Text('分析思路：')
+              .fontSize(12)
               .fontWeight(FontWeight.Medium)
               .fontColor('#333333')
-              .width('100%')
-              .margin({ bottom: 6 })
-
-            Text('日期时辰：2024年四月初八 · 午时（示例排盘，仅供研习）')
-              .fontSize(12)
-              .fontColor('#555555')
-              .width('100%')
-              .margin({ bottom: 6 })
-
-            Text('演禽盘式概览：日禽 心宿 · 时禽 星宿 · 翻禽 奎宿 · 活曜 井宿（示例组合）')
-              .fontSize(12)
-              .fontColor('#444444')
-              .width('100%')
               .margin({ bottom: 4 })
-
-            Text('锁泊十二宫示意：时禽星宿落申宫，示意为“龙落砧板”；天禽奎宿落寅宫，示意为“文星登高”等，仅作结构演示。')
+            Text('该案例中，时禽星宿落申宫（受制），天禽奎宿落寅宫（登高）。分析时先通过上述结构理解案件背景，再通过「十三退」观察事态走向。')
               .fontSize(11)
               .fontColor('#666666')
-              .width('100%')
-              .margin({ bottom: 8 })
-
-            Text('分析思路示例：先看三传四课与锁泊十二宫，理解案件结构与环境，再结合十三退趋势观察过程是升温、调解还是逐步淡出。')
-              .fontSize(11)
-              .fontColor('#888888')
-              .width('100%')
+              .lineHeight(16)
           }
           .width('100%')
-          .padding(12)
-          .backgroundColor('#f8f6ff')
+          .padding(14)
+          .backgroundColor('#ffffff')
           .borderRadius(12)
+          .border({ width: 1, color: '#e0e0e0' })
           .margin({ bottom: 16 })
 
           // 状态选择说明
