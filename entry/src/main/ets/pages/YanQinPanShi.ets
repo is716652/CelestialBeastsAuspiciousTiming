@@ -1,6 +1,7 @@
 import { common } from '@kit.AbilityKit';
 import { buffer, JSON as ArkJSON } from '@kit.ArkTS';
 import { router } from '@kit.ArkUI';
+import { loadKnowledge15xConfig, Knowledge15xConfig } from '../utils/Knowledge15x';
 
 // ============== 接口定义 ==============
 
@@ -247,6 +248,7 @@ struct YanQinPanShi {
   @State comboHints: Array<string> = [];
   @State seasonalHints: Array<string> = [];
   @State nobleHints: Array<string> = [];
+  @State panRiskHints: Array<string> = [];
 
   aboutToAppear(): void {
     // 获取路由参数
@@ -268,7 +270,7 @@ struct YanQinPanShi {
       this.starRulesConfig = starRules;
       this.suoBoConfig = suoBo;
       this.hasLoaded = true;
-      this.calculateAll();
+      await this.calculateAll();
     }
   }
 
@@ -283,7 +285,7 @@ struct YanQinPanShi {
     }
   }
 
-  private calculateAll(): void {
+  private async calculateAll(): Promise<void> {
     if (!this.starRulesConfig) return;
     const cfg = this.starRulesConfig;
 
@@ -358,6 +360,9 @@ struct YanQinPanShi {
 
     // 10. 贵人宿提示
     this.calculateNobleHints(cfg);
+
+    // 11. 盘面凶煞研习提示（基于 15.13 ~ 15.16 摘要）
+    await this.calculatePanRiskHints();
   }
 
   // ============== 四禽计算 ==============
@@ -680,6 +685,76 @@ struct YanQinPanShi {
     }
 
     this.nobleHints = hints;
+  }
+
+  private async calculatePanRiskHints(): Promise<void> {
+    const hints: Array<string> = [];
+    if (!this.wuQinResult) {
+      this.panRiskHints = hints;
+      return;
+    }
+
+    const cfg = await loadKnowledge15xConfig(this.context);
+    if (!cfg || !cfg.pan_risk) {
+      this.panRiskHints = hints;
+      return;
+    }
+
+    const panCfg = cfg.pan_risk;
+
+    const dayStar = this.wuQinResult.dayStar.star;
+    const suoBos: Array<SuoBoResult | null> = [this.diQinSuoBo, this.tianQinSuoBo, this.huoYaoSuoBo];
+
+    // 无头星结构（简化版）
+    const wuTouCfg = panCfg.wu_tou;
+    for (let i = 0; i < suoBos.length; i++) {
+      const sb = suoBos[i];
+      if (sb && wuTouCfg.branches.indexOf(sb.branch) >= 0 && wuTouCfg.stars.indexOf(sb.star) >= 0) {
+        let text = wuTouCfg.safeSummaryTemplate;
+        text = text.replace('{{star}}', sb.star).replace('{{branch}}', sb.branch);
+        hints.push(text);
+        break;
+      }
+    }
+
+    // 六恶禽日 / 大煞六凶日（按日禽）
+    const liuECfg = panCfg.liu_e_da_sha;
+    if (liuECfg.liu_e_stars.indexOf(dayStar) >= 0 || liuECfg.da_sha_stars.indexOf(dayStar) >= 0) {
+      let text = liuECfg.safeSummaryTemplate;
+      text = text.replace('{{star}}', dayStar);
+      hints.push(text);
+    }
+
+    // 刑害刀砧 / 汤火方向
+    const dangerCfg = panCfg.xinghai_tanghuo;
+    const dangerBranches: Array<string> = [];
+    for (let i = 0; i < suoBos.length; i++) {
+      const sb = suoBos[i];
+      if (!sb) {
+        continue;
+      }
+      if (dangerCfg.danger_branches.indexOf(sb.branch) >= 0) {
+        if (dangerBranches.indexOf(sb.branch) < 0) {
+          dangerBranches.push(sb.branch);
+        }
+      }
+    }
+    if (dangerBranches.length > 0) {
+      const branchesText = dangerBranches.join('、');
+      let text = dangerCfg.safeSummaryTemplate;
+      text = text.replace('{{branches}}', branchesText);
+      hints.push(text);
+    }
+
+    // 空亡 / 寡亡星组
+    const kongWangCfg = panCfg.kong_wang_group;
+    if (kongWangCfg.stars.indexOf(dayStar) >= 0) {
+      let text = kongWangCfg.safeSummaryTemplate;
+      text = text.replace('{{star}}', dayStar);
+      hints.push(text);
+    }
+
+    this.panRiskHints = hints;
   }
 
   private getDateString(): string {
@@ -1203,6 +1278,49 @@ struct YanQinPanShi {
             .width('100%')
             .padding(14)
             .backgroundColor('#fff3e0')
+            .borderRadius(14)
+            .margin({ left: 16, right: 16, bottom: 12 })
+          }
+
+          // ========== 凶煞研习提示（15.x 摘要） ==========
+          if (this.panRiskHints.length > 0) {
+            Column() {
+              Row() {
+                Text('⚠️ 凶煞研习提示')
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#b91c1c')
+                Blank()
+                Text('仅标记经典格局，供学习使用')
+                  .fontSize(11)
+                  .fontColor('#f97316')
+              }
+              .width('100%')
+              .margin({ bottom: 8 })
+
+              Text('下列提示仅用于指向 15.13 ~ 15.16 等文档中描述的典型盘面结构，帮助在真实盘面中找到对应案例，不参与结果判断。')
+                .fontSize(11)
+                .fontColor('#6b7280')
+                .width('100%')
+                .margin({ bottom: 8 })
+
+              ForEach(this.panRiskHints, (item: string) => {
+                Row() {
+                  Text('●')
+                    .fontSize(10)
+                    .fontColor('#b91c1c')
+                  Text(item)
+                    .fontSize(12)
+                    .fontColor('#111827')
+                    .margin({ left: 4 })
+                }
+                .width('100%')
+                .margin({ bottom: 4 })
+              })
+            }
+            .width('100%')
+            .padding(14)
+            .backgroundColor('#fef2f2')
             .borderRadius(14)
             .margin({ left: 16, right: 16, bottom: 12 })
           }

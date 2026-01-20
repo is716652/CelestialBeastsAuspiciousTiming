@@ -2,6 +2,7 @@ import { common } from '@kit.AbilityKit';
 import { buffer, JSON as ArkJSON } from '@kit.ArkTS';
 import { router } from '@kit.ArkUI';
 import { CalendarManager, CalendarDayInfo } from '../utils/CalendarManager';
+import { calcTimeTrendFromCalendar, TimeRiskTag } from '../utils/Knowledge15x';
 
 // ============== 接口定义 ==============
 
@@ -289,6 +290,7 @@ struct Index {
   // 四禽计算结果
   @State fourStars: FourStarsResult | null = null;
   @State dayInfo: CalendarDayInfo | null = null;
+  @State timeTrendTags: TimeRiskTag[] = [];
 
   // 排盘结果
   @State resultKey: string = '';
@@ -426,8 +428,15 @@ struct Index {
     };
     this.fourStars = result;
 
-    // 异步获取万年历信息
-    this.dayInfo = await CalendarManager.getInstance().getDayInfo(this.selectedYear, this.selectedMonth, this.selectedDay);
+    // 异步获取万年历信息与时间趋势标签（研习向提示）
+    const info = await CalendarManager.getInstance().getDayInfo(this.selectedYear, this.selectedMonth, this.selectedDay);
+    this.dayInfo = info;
+    if (info) {
+      const trend = await calcTimeTrendFromCalendar(info, this.context);
+      this.timeTrendTags = trend.tags;
+    } else {
+      this.timeTrendTags = [];
+    }
   }
 
   private calculateYearStar(year: number, cfg: YanqinStarRulesConfig): StarCalcResult {
@@ -1097,6 +1106,45 @@ struct Index {
               .width('100%')
               .margin({ top: 10 })
               .padding({ left: 4 })
+            }
+
+            // 时间趋势 · 研习提示
+            if (this.dayInfo && this.timeTrendTags.length > 0) {
+              Column() {
+                Row() {
+                  Text('时间趋势 · 研习提示')
+                    .fontSize(12)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#374151')
+                  Blank()
+                  Text('基于传统十五卷等规则，仅供学习参考')
+                    .fontSize(10)
+                    .fontColor('#9ca3af')
+                }
+                .width('100%')
+                .margin({ bottom: 4 })
+
+                ForEach(this.timeTrendTags, (tag: TimeRiskTag) => {
+                  Column() {
+                    Text(tag.label)
+                      .fontSize(11)
+                      .fontWeight(FontWeight.Medium)
+                      .fontColor(tag.level === 'high' ? '#b91c1c' : (tag.level === 'medium' ? '#b45309' : '#1f2933'))
+                    Text(tag.safeSummary)
+                      .fontSize(10)
+                      .fontColor('#4b5563')
+                      .lineHeight(14)
+                      .margin({ top: 2 })
+                  }
+                  .width('100%')
+                  .padding({ top: 6, bottom: 6, left: 8, right: 8 })
+                  .margin({ top: 4 })
+                  .backgroundColor(tag.level === 'high' ? '#fef2f2' : (tag.level === 'medium' ? '#fffbeb' : '#f3f4f6'))
+                  .borderRadius(8)
+                })
+              }
+              .width('100%')
+              .margin({ top: 8 })
             }
           }
           .width('100%')

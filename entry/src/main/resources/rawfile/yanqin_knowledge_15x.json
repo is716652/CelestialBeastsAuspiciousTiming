@@ -1,0 +1,140 @@
+{
+  "meta": {
+    "source": "演禽十五卷高阶规则（研习向）",
+    "description": "15.10 ~ 15.18 中与时间趋势和盘面结构相关的部分规则，用于生成中性、安全的研习提示标签。",
+    "version": "1.0.0"
+  },
+  "time_trend": {
+    "ten_evil": {
+      "gan_zhi": [
+        "甲辰", "乙巳", "丙申", "丁亥",
+        "戊戌", "己丑", "庚辰", "辛巳",
+        "壬申", "癸亥"
+      ],
+      "label": "十恶大败日（研习）",
+      "level": "medium",
+      "safeSummary": "传统上认为这类日子在财务、合作等重大决策上波动较大，适宜用来整理、复盘与“破旧立新”，日常生活照常即可。"
+    },
+    "huang_wu": {
+      "branch_by_month": [
+        "",
+        "巳",
+        "酉",
+        "丑",
+        "辰",
+        "申",
+        "子",
+        "卯",
+        "未",
+        "亥",
+        "寅",
+        "戌",
+        "午"
+      ],
+      "label": "天地荒芜日（研习）",
+      "level": "high",
+      "safeSummary": "古籍中将本日视为“月中能量易失衡”的节点，适合作为收尾、止损和断舍离的时间点，重大开启型活动可考虑避开。"
+    },
+    "luotian": {
+      "rules": [
+        { "lunar_day": 1, "retreat_branch": "子" },
+        { "lunar_day": 2, "advance_branch": "申" },
+        { "lunar_day": 3, "retreat_branch": "未" },
+        { "lunar_day": 4, "advance_branch": "亥" },
+        { "lunar_day": 5, "retreat_branch": "午" },
+        { "lunar_day": 6, "advance_branch": "子" },
+        { "lunar_day": 8, "advance_branch": "卯" },
+        { "lunar_day": 9, "retreat_branch": "酉" },
+        { "lunar_day": 11, "retreat_branch": "卯" },
+        { "lunar_day": 12, "advance_branch": "未" },
+        { "lunar_day": 13, "retreat_branch": "寅" },
+        { "lunar_day": 16, "advance_branch": "辰" },
+        { "lunar_day": 17, "retreat_branch": "丑" },
+        { "lunar_day": 18, "advance_branch": "戌" },
+        { "lunar_day": 20, "advance_branch": "丑" },
+        { "lunar_day": 21, "retreat_branch": "子" },
+        { "lunar_day": 25, "retreat_branch": "戌" },
+        { "lunar_day": 26, "advance_branch": "午" },
+        { "lunar_day": 27, "retreat_branch": "卯" },
+        { "lunar_day": 28, "advance_branch": "酉" },
+        { "lunar_day": 29, "retreat_branch": "申" }
+      ],
+      "retreat": {
+        "label": "罗天大退日（研习）",
+        "level": "medium",
+        "safeSummary": "本日传统上被视为气机偏“退”的节点，适合处理收尾、减负类事务，重大扩张型行动可暂缓观察。"
+      },
+      "advance": {
+        "label": "罗天大进日（研习）",
+        "level": "mild",
+        "safeSummary": "本日被视为气机偏“进”的时间点，适合做计划推进、学习实践等正向累积型活动。"
+      }
+    },
+    "sixjia": {
+      "progress": {
+        "gan_zhi": ["甲子", "己卯", "甲午", "己酉"],
+        "label": "六甲进神起始日",
+        "level": "mild",
+        "safeSummary": "十五日一小周天中的“进神”起点，适合作为新一轮计划的开端，用于规划、学习与温和推进。"
+      },
+      "retreat": {
+        "gan_zhi": ["甲寅", "己巳", "甲申", "己亥"],
+        "label": "六甲退神起始日",
+        "level": "mild",
+        "safeSummary": "十五日循环中的“退神”起点，更适合整理旧账、处理存量问题，而不是开启全新重负。"
+      },
+      "hide": {
+        "gan_zhi": ["甲戌", "己丑", "甲辰", "己未"],
+        "label": "六甲伏神起始日",
+        "level": "medium",
+        "safeSummary": "十五日循环中的“伏神”起点，适合静观其变、减少不必要波动，研习中多用于观察而非行动。"
+      }
+    },
+    "general_arrow": {
+      "groups": [
+        { "day_gan": ["甲", "庚"], "branches": ["卯", "酉"] },
+        { "day_gan": ["乙", "辛"], "branches": ["辰", "戌"] },
+        { "day_gan": ["丙", "壬"], "branches": ["子", "午"] },
+        { "day_gan": ["丁", "癸"], "branches": ["丑", "未"] }
+      ],
+      "label": "李广将军箭方（研习）",
+      "level": "medium",
+      "safeSummaryTemplate": "按日干{{gan}}推算，传统将“{{branches}}”方视为将军箭方，研习时可用以理解“何谓不宜反复冲撞之向”，日常生活中以理性参考为主。"
+    },
+    "shi_zhong_jiangxing": {
+      "groups": [
+        { "day_zhi": ["申", "子", "辰"], "time": "卯时", "group_label": "申子辰（水局）" },
+        { "day_zhi": ["巳", "酉", "丑"], "time": "子时", "group_label": "巳酉丑（金局）" },
+        { "day_zhi": ["亥", "卯", "未"], "time": "午时", "group_label": "亥卯未（木局）" },
+        { "day_zhi": ["寅", "午", "戌"], "time": "酉时", "group_label": "寅午戌（火局）" }
+      ],
+      "label": "时中将星（研习）",
+      "level": "mild",
+      "safeSummaryTemplate": "今日日支属{{groupLabel}}，传统“时中将星”口诀认为 {{time}} 为将星时，研习时可将其视为气机较旺、适合发力与协调的时间节点。"
+    }
+  },
+  "pan_risk": {
+    "wu_tou": {
+      "stars": ["房", "尾", "危", "觜", "柳", "翼"],
+      "branches": ["申", "酉"],
+      "label": "无头星结构（研习）",
+      "safeSummaryTemplate": "【无头星结构（研习）】本盘中 {{star}} 宿落在刀砧宫（{{branch}}宫），可结合 15.14「七元无头星」表研习“事体有残缺或结果不全”的经典示例。"
+    },
+    "liu_e_da_sha": {
+      "liu_e_stars": ["氐", "房", "奎", "壁", "斗", "牛", "箕", "尾", "女", "虚", "危", "胃", "毕", "参", "井"],
+      "da_sha_stars": ["奎", "娄", "角", "亢", "斗", "牛", "牛", "女", "鬼"],
+      "label": "六恶 / 大煞星组（研习）",
+      "safeSummaryTemplate": "【六恶 / 大煞星组（研习）】今日日禽为「{{star}}」宿，属于 15.13 中提到的六恶或大煞星组之一，适合作为研读“何谓重大事项慎用之日”的案例。"
+    },
+    "xinghai_tanghuo": {
+      "danger_branches": ["申", "酉", "巳", "午"],
+      "label": "刑害刀砧 / 汤火方（研习）",
+      "safeSummaryTemplate": "【刑害刀砧 / 汤火方（研习）】当前盘中关键禽星有落在 {{branches}} 宫，可结合 15.15 中的「刑害刀砧汤火」表体会传统对这些方位的警惕用法。"
+    },
+    "kong_wang_group": {
+      "stars": ["危", "室", "壁", "胃", "昴", "毕", "柳", "井", "鬼", "房", "心", "氐", "斗", "牛", "虚"],
+      "label": "空亡 / 寡亡星组（研习）",
+      "safeSummaryTemplate": "【空亡 / 寡亡星组（研习）】日禽「{{star}}」属于 15.16 中六甲空亡（寡亡煞）相关星组之一，可作为研习“虚妄与离散象”的切入点，实际应用需结合日干支等条件辨别。"
+    }
+  }
+}
