@@ -232,6 +232,17 @@ struct YanQinPanShi {
   @State diQinSuoBo: SuoBoResult | null = null;
   @State tianQinSuoBo: SuoBoResult | null = null;
   @State huoYaoSuoBo: SuoBoResult | null = null;
+  @State useGodSuoBo: SuoBoResult | null = null;
+
+  // 选项数据
+  private years: string[] = [];
+  private months: string[] = [];
+  private days: string[] = [];
+  private hourBranches: string[] = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+  private stars28: string[] = ['角', '亢', '氐', '房', '心', '尾', '箵', '斗', '牛', '女', '虚', '危', '室', '壁', '奎', '娄', '胃', '昂', '毕', '觜', '参', '井', '鬼', '柳', '星', '张', '翼', '轸'];
+  
+  // 用神选择
+  @State selectedUseGodStar: string = '';
 
   // 吞啖结果
   @State tunDanDesc1: string = '';  // 地禽vs天禽
@@ -251,6 +262,17 @@ struct YanQinPanShi {
   @State panRiskHints: Array<string> = [];
 
   aboutToAppear(): void {
+    // 初始化选项数据
+    for (let i = 0; i < 120; i++) {
+      this.years.push((1924 + i).toString());
+    }
+    for (let i = 1; i <= 12; i++) {
+      this.months.push(i.toString());
+    }
+    for (let i = 1; i <= 31; i++) {
+      this.days.push(i.toString());
+    }
+
     // 获取路由参数
     const params = router.getParams() as PageParams;
     if (params) {
@@ -336,7 +358,15 @@ struct YanQinPanShi {
     const huoYaoBranch = branches[this.selectedHourIndex]; // 活曜落用时
     this.huoYaoSuoBo = this.judgeSuoBo(huoYaoResult.star, huoYaoBranch, cfg);
 
-    // 4. 三禽分类
+    // 4. 用神锁泊计算
+    if (this.selectedUseGodStar) {
+      // 用神落宫逻辑：用神泊于落用时 (selectedHourIndex)
+      this.useGodSuoBo = this.judgeSuoBo(this.selectedUseGodStar, branches[this.selectedHourIndex], cfg);
+    } else {
+      this.useGodSuoBo = null;
+    }
+
+    // 5. 三禽分类
     this.diQinType = this.getQinType(hourResult.star, cfg);
     this.tianQinType = this.getQinType(fanQinResult.star, cfg);
 
@@ -796,21 +826,95 @@ struct YanQinPanShi {
             .fontColor('#888888')
         }
         .width('100%')
-        .padding({ left: 16, right: 16, top: 16, bottom: 12 })
-  
-        // 日期时辰显示
-        Row() {
-          Text(this.getDateString())
-            .fontSize(14)
-            .fontColor('#333333')
-          Text(`${this.getBranchName(this.selectedHourIndex)}时`)
-            .fontSize(14)
-            .fontColor('#1a5276')
-            .fontWeight(FontWeight.Medium)
-            .margin({ left: 8 })
+        .padding({ left: 16, right: 16, top: 16, bottom: 8 })
+
+        // 交互式日期选择区
+        Column() {
+          Row() {
+            // 年
+            Select(this.years.map((y: string): SelectOption => ({ value: y + '年' })))
+              .value(this.selectedYear.toString() + '年')
+              .selected(this.years.indexOf(this.selectedYear.toString()))
+              .onSelect((index: number) => {
+                this.selectedYear = parseInt(this.years[index]);
+                this.calculateAll();
+              })
+              .height(32)
+              .backgroundColor('#f0f0f0')
+              .borderRadius(8)
+            
+            // 月
+            Select(this.months.map((m: string): SelectOption => ({ value: m + '月' })))
+              .value(this.selectedMonth.toString() + '月')
+              .selected(this.selectedMonth - 1)
+              .onSelect((index: number) => {
+                this.selectedMonth = index + 1;
+                this.calculateAll();
+              })
+              .height(32)
+              .backgroundColor('#f0f0f0')
+              .borderRadius(8)
+              .margin({ left: 4 })
+
+            // 日
+            Select(this.days.map((d: string): SelectOption => ({ value: d + '日' })))
+              .value(this.selectedDay.toString() + '日')
+              .selected(this.selectedDay - 1)
+              .onSelect((index: number) => {
+                this.selectedDay = index + 1;
+                this.calculateAll();
+              })
+              .height(32)
+              .backgroundColor('#f0f0f0')
+              .borderRadius(8)
+              .margin({ left: 4 })
+
+            // 时辰
+            Select(this.hourBranches.map((b: string): SelectOption => ({ value: b + '时' })))
+              .value(this.getBranchName(this.selectedHourIndex) + '时')
+              .selected(this.selectedHourIndex)
+              .onSelect((index: number) => {
+                this.selectedHourIndex = index;
+                this.calculateAll();
+              })
+              .height(32)
+              .backgroundColor('#f0f0f0')
+              .borderRadius(8)
+              .margin({ left: 4 })
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.Center)
+          .margin({ bottom: 8 })
+
+          // 用神选择
+          Row() {
+            Text('焦点用神')
+              .fontSize(12)
+              .fontColor('#666666')
+              .margin({ right: 8 })
+            
+            Select([
+              { value: '不选择' },
+              ...this.stars28.map((s: string): SelectOption => ({ value: s + '宿' }))
+            ])
+              .value(this.selectedUseGodStar ? this.selectedUseGodStar + '宿' : '点击选择用神')
+              .onSelect((index: number) => {
+                if (index === 0) {
+                  this.selectedUseGodStar = '';
+                } else {
+                  this.selectedUseGodStar = this.stars28[index - 1];
+                }
+                this.calculateAll();
+              })
+              .height(32)
+              .backgroundColor('#e3f2fd')
+              .borderRadius(8)
+              .layoutWeight(1)
+          }
+          .width('100%')
+          .padding({ left: 16, right: 16 })
         }
         .width('100%')
-        .justifyContent(FlexAlign.Center)
         .margin({ bottom: 16 })
   
         if (this.hasLoaded && this.wuQinResult) {
@@ -1152,6 +1256,39 @@ struct YanQinPanShi {
                 .margin({ left: 8 })
             }
             .width('100%')
+            .margin({ bottom: 8 })
+
+            if (this.selectedUseGodStar && this.useGodSuoBo) {
+              Divider().margin({ top: 4, bottom: 8 })
+              Row() {
+                Text('🎯 焦点用神：')
+                  .fontSize(13)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#d32f2f')
+                Text(this.selectedUseGodStar)
+                  .fontSize(15)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#d32f2f')
+                Text(`泊「${this.useGodSuoBo.branch}」${this.useGodSuoBo.environment}宫`)
+                  .fontSize(13)
+                  .fontColor('#333333')
+                  .margin({ left: 8 })
+              }
+              .width('100%')
+              .margin({ bottom: 4 })
+
+              Text(`断语：${this.useGodSuoBo.geName} (${this.useGodSuoBo.geResult})`)
+                .fontSize(12)
+                .fontColor(this.getResultColor(this.useGodSuoBo.geResult))
+                .fontWeight(FontWeight.Medium)
+                .width('100%')
+              
+              Text(this.useGodSuoBo.geText)
+                .fontSize(11)
+                .fontColor('#666666')
+                .width('100%')
+                .margin({ top: 2 })
+            }
           }
           .width('100%')
           .padding(14)
@@ -1476,6 +1613,11 @@ struct YanQinPanShi {
 
             // 活曜物象
             this.StarImageryItem('活曜', this.wuQinResult.huoYao.star, '#6a1b9a')
+
+            // 用神物象
+            if (this.selectedUseGodStar) {
+              this.StarImageryItem('用神', this.selectedUseGodStar, '#d32f2f')
+            }
           }
           .width('100%')
           .padding(14)
@@ -1593,7 +1735,18 @@ struct YanQinPanShi {
     .justifyContent(FlexAlign.Center)
     .backgroundColor(this.getBranchBgColor(branchIndex))
     .borderRadius(6)
-    .border({ width: 1, color: '#e0e0e0' })
+    .border({ 
+      width: this.isUseGodInBranch(branchIndex) ? 2 : 1, 
+      color: this.isUseGodInBranch(branchIndex) ? '#d32f2f' : '#e0e0e0' 
+    })
+    .shadow(this.isUseGodInBranch(branchIndex) ? { radius: 10, color: '#ffcdd2', offsetX: 0, offsetY: 0 } : null)
+  }
+
+  // 判断用神是否在该宫位
+  private isUseGodInBranch(branchIndex: number): boolean {
+    if (!this.selectedUseGodStar) return false;
+    const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+    return this.useGodSuoBo !== null && this.useGodSuoBo.branch === branches[branchIndex];
   }
   
   // 中宫左：地禽信息

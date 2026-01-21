@@ -3,6 +3,9 @@
     "pages/Splash",
     "pages/Index",
     "pages/YanQinPanShi",
-    "pages/AdvancedStudyCases"
+    "pages/AdvancedStudyCases",
+    "pages/LostItemsSearch",
+    "pages/WeatherMeteorology",
+    "pages/ConstructionBurial"
   ]
 }

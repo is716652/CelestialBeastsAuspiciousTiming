@@ -139,6 +139,38 @@ export interface WeatherResult {
   description: string;
 }
 
+export interface BurialStarRuleConfig {
+  star: string;
+  deng_yuan: string;
+  fu_duan?: boolean;
+  lucky_days?: Array<string>;
+  unlucky_days?: Array<string>;
+  general_note: string;
+}
+
+export interface BurialGroupConfig {
+  name: string;
+  alias: string;
+  prohibited_nayin: string;
+  prohibited_zhi?: Array<string>;
+  stars: Array<BurialStarRuleConfig>;
+}
+
+export interface BurialRulesConfig {
+  groups: Array<BurialGroupConfig>;
+}
+
+export interface BurialResult {
+  groupName: string;
+  alias: string;
+  isDengYuan: boolean;
+  nayinConflict: boolean;
+  zhiConflict: boolean;
+  dayLuckyStatus: 'lucky' | 'unlucky' | 'none';
+  generalNote: string;
+  suggestions: string;
+}
+
 const NAYIN_ELEMENT_MAP: Record<string, string> = {
   '甲子': '金', '乙丑': '金', '丙寅': '火', '丁卯': '火', '戊辰': '木', '己巳': '木', '庚午': '土', '辛未': '土', '壬申': '金', '癸酉': '金',
   '甲戌': '火', '乙亥': '火', '丙子': '水', '丁丑': '水', '戊寅': '土', '己卯': '土', '庚辰': '金', '辛巳': '金', '壬午': '木', '癸未': '木',
@@ -212,6 +244,83 @@ export async function loadKnowledge15xConfig(context: common.Context): Promise<K
     console.error('Failed to load yanqin_knowledge_15x.json, error: ' + JSON.stringify(err));
     return null;
   }
+}
+
+export async function loadBurialRulesConfig(context: common.Context): Promise<BurialRulesConfig | null> {
+  try {
+    const value = await context.resourceManager.getRawFileContent('yanqin_burial_rules.json');
+    const str = buffer.from(value.buffer).toString();
+    return ArkJSON.parse(str) as BurialRulesConfig;
+  } catch (err) {
+    console.error('Failed to load yanqin_burial_rules.json, error: ' + JSON.stringify(err));
+    return null;
+  }
+}
+
+/**
+ * 计算演禽造葬避忌
+ */
+export function calcBurialPrediction(day: CalendarDayInfo, dayStar: string, config: BurialRulesConfig): BurialResult {
+  const ganZhi = `${day.day_gan}${day.day_zhi}`;
+  const dayNayin = NAYIN_ELEMENT_MAP[ganZhi] || '';
+  
+  let targetGroup: BurialGroupConfig | null = null;
+  let targetStarRule: BurialStarRuleConfig | null = null;
+  
+  for (const group of config.groups) {
+    const starRule = group.stars.find(s => s.star === dayStar);
+    if (starRule) {
+      targetGroup = group;
+      targetStarRule = starRule;
+      break;
+    }
+  }
+  
+  if (!targetGroup || !targetStarRule) {
+    return {
+      groupName: '未知',
+      alias: '未知',
+      isDengYuan: false,
+      nayinConflict: false,
+      zhiConflict: false,
+      dayLuckyStatus: 'none',
+      generalNote: '未找到相关星宿规则。',
+      suggestions: '建议参考常规择日原则。'
+    };
+  }
+  
+  const isDengYuan = targetStarRule.deng_yuan === day.day_zhi;
+  const nayinConflict = dayNayin === targetGroup.prohibited_nayin;
+  const zhiConflict = targetGroup.prohibited_zhi?.includes(day.day_zhi) || false;
+  
+  let dayLuckyStatus: 'lucky' | 'unlucky' | 'none' = 'none';
+  if (targetStarRule.lucky_days?.includes(ganZhi)) {
+    dayLuckyStatus = 'lucky';
+  } else if (targetStarRule.unlucky_days?.includes(ganZhi)) {
+    dayLuckyStatus = 'unlucky';
+  }
+  
+  let suggestions = '';
+  if (nayinConflict) suggestions += `【禁忌】纳音${dayNayin}五行受克，不利。`;
+  if (zhiConflict) suggestions += `【禁忌】日支${day.day_zhi}为该组忌日。`;
+  if (dayLuckyStatus === 'unlucky') suggestions += `【凶】本日干支为该宿凶日。`;
+  if (dayLuckyStatus === 'lucky') suggestions += `【吉】本日干支为该宿吉日。`;
+  if (isDengYuan) suggestions += `【登垣】星宿归位，能量最强。`;
+  
+  if (suggestions === '') {
+    suggestions = '今日气机平稳，可结合具体事体研习。';
+  }
+
+  return {
+    groupName: targetGroup.name,
+    alias: targetGroup.alias,
+    isDengYuan,
+    nayinConflict,
+    zhiConflict,
+    dayLuckyStatus,
+    generalNote: targetStarRule.general_note,
+    suggestions: suggestions.trim()
+  };
 }
 
 export async function calcTimeTrendFromCalendar(day: CalendarDayInfo, context: common.Context): Promise<TimeTrendResult> {

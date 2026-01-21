@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "source": "16.专题占 二十八禽造葬选择.md",
+    "description": "二十八宿造葬择日核心规则，包含登垣、纳音禁忌、吉凶干支等。",
+    "version": "1.0.0"
+  },
+  "groups": [
+    {
+      "name": "四日禽",
+      "alias": "双喜",
+      "prohibited_nayin": "木",
+      "stars": [
+        {
+          "star": "虚",
+          "deng_yuan": "子",
+          "fu_duan": true,
+          "lucky_days": ["甲子", "庚子", "戊申", "庚申", "丙辰", "戊辰"],
+          "unlucky_days": ["丙子", "壬子", "丙申", "甲申", "甲辰", "戊子", "壬申", "壬辰"],
+          "general_note": "虚日鼠，子日登垣，犯伏断凶。"
+        },
+        {
+          "star": "星",
+          "deng_yuan": "午",
+          "lucky_days": ["甲寅", "丙寅", "壬寅", "甲午", "丙午", "戊午", "丙戌", "庚戌"],
+          "general_note": "星日马，午日登垣，造吉葬凶。"
+        },
+        {
+          "star": "昴",
+          "deng_yuan": "卯",
+          "lucky_days": ["乙亥", "辛亥", "丁卯", "乙卯", "辛卯", "丁未", "乙未", "辛未"],
+          "unlucky_days": ["癸卯"],
+          "general_note": "昴日鸡，卯日登垣，葬嫁娶吉。"
+        },
+        {
+          "star": "房",
+          "deng_yuan": "酉",
+          "lucky_days": ["己巳", "丁巳", "己酉", "丁丑", "辛丑", "癸酉"],
+          "general_note": "房日兔，酉日登垣，竖造俱吉，葬忌。"
+        }
+      ]
+    },
+    {
+      "name": "四月禽",
+      "alias": "善宿",
+      "prohibited_nayin": "土",
+      "stars": [
+        { "star": "心", "deng_yuan": "寅", "general_note": "心月狐寅日登垣，造葬百事迪吉。" },
+        { "star": "毕", "deng_yuan": "申", "general_note": "毕月乌申日登垣，造葬百事迪吉。" },
+        { "star": "危", "deng_yuan": "丑", "general_note": "危月燕丑日登垣，造葬百事迪吉。" },
+        { "star": "张", "deng_yuan": "未", "fu_duan": true, "general_note": "张月鹿未日登垣，犯伏断，凶不用。" }
+      ]
+    },
+    {
+      "name": "四火禽",
+      "alias": "燥宿",
+      "prohibited_nayin": "水",
+      "prohibited_zhi": ["未", "申"],
+      "stars": [
+        { "star": "翼", "deng_yuan": "子", "general_note": "翼火蛇子日登垣，火禽葬吉造忌。" },
+        { "star": "室", "deng_yuan": "午", "general_note": "室火猪午日登垣，火禽葬吉造忌。" },
+        { "star": "尾", "deng_yuan": "卯", "general_note": "尾火虎卯日登垣，火禽葬吉造忌。" },
+        { "star": "觜", "deng_yuan": "酉", "general_note": "觜火猴酉日登垣，火禽葬吉造忌。" }
+      ]
+    },
+    {
+      "name": "四水禽",
+      "alias": "弱宿",
+      "prohibited_nayin": "土",
+      "prohibited_zhi": ["丑", "未"],
+      "stars": [
+        { "star": "箕", "deng_yuan": "辰", "fu_duan": true, "general_note": "箕水豹辰日登垣，犯伏断，造葬俱不利。" },
+        { "star": "参", "deng_yuan": "戌", "general_note": "参水猿戌日登垣，造葬四水俱不利。" },
+        { "star": "轸", "deng_yuan": "巳", "general_note": "轸水蚓巳日登垣，造葬四水俱不利。" },
+        { "star": "壁", "deng_yuan": "亥", "fu_duan": true, "general_note": "壁水渝亥日登垣，犯伏断，造葬俱不利。" }
+      ]
+    },
+    {
+      "name": "四木禽",
+      "alias": "文宿",
+      "prohibited_nayin": "金",
+      "prohibited_zhi": ["辰"],
+      "stars": [
+        { "star": "角", "deng_yuan": "寅", "general_note": "角木蛟寅日登垣，造葬嫁娶吉，主出名贤。" },
+        { "star": "奎", "deng_yuan": "申", "general_note": "奎木狼申日登垣，造葬嫁娶吉，主出名贤。" },
+        { "star": "斗", "deng_yuan": "丑", "fu_duan": true, "general_note": "斗木獬丑日登垣，犯伏断，入垣吉。" },
+        { "star": "井", "deng_yuan": "未", "general_note": "井木犴未日登垣，造葬嫁娶吉，主出名贤。" }
+      ]
+    },
+    {
+      "name": "四金禽",
+      "alias": "威宿",
+      "prohibited_nayin": "火",
+      "prohibited_zhi": ["戌"],
+      "stars": [
+        { "star": "鬼", "deng_yuan": "子", "general_note": "鬼金羊子日登垣，征战上官吉，造葬忌。" },
+        { "star": "牛", "deng_yuan": "午", "general_note": "牛金牛午日登垣，征战上官吉，造葬忌。" },
+        { "star": "亢", "deng_yuan": "卯", "general_note": "亢金龙卯日登垣，征战上官吉，造葬忌。" },
+        { "star": "娄", "deng_yuan": "酉", "general_note": "娄金狗酉日登垣，征战上官吉，造葬忌。" }
+      ]
+    },
+    {
+      "name": "四土禽",
+      "alias": "怒宿",
+      "prohibited_nayin": "木",
+      "prohibited_zhi": ["寅"],
+      "stars": [
+        { "star": "氐", "deng_yuan": "辰", "general_note": "氐土貉辰日登垣，凡百所为皆愁怒。" },
+        { "star": "柳", "deng_yuan": "巳", "general_note": "柳土獐巳日登垣，凡百所为皆愁怒。" },
+        { "star": "女", "deng_yuan": "亥", "general_note": "女土蝠亥日登垣，凡百所为皆愁怒。" },
+        { "star": "胃", "deng_yuan": "戌", "fu_duan": true, "general_note": "胃土雉戌日登垣，犯伏断，丙戌日宝日可用。" }
+      ]
+    }
+  ]
+}
