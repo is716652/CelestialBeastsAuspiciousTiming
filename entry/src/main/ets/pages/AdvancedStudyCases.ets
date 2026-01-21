@@ -1,4 +1,4 @@
-// 高级研习 · 知识点&案例库（官司场景 · 十三退趋势研习示例）
+// 高级研习 · 知识点与案例库（官司场景 · 十三退趋势研习示例）
 // 本页面使用模拟数据，仅用于术数文化研习与交互参考，不参与正式演算逻辑。
 
 import { MiniQinDisk, MiniPalaceData, MiniThreePassData } from '../components/MiniQinDisk';
@@ -235,6 +235,21 @@ const STUDY_GUIDE_ITEMS: StudyGuideItem[] = [
     ],
     bgColor: '#eef2ff',
     titleColor: '#1d4ed8'
+  },
+  {
+    title: '专题占 · 二十八宿气象',
+    summary: '基于日辰与日宿的五行属性，预测天时阴晴风雨。',
+    detail: '【研习要点】\n演禽术的基础应用之一。日宿定性，五行定势，结合四季变化可准确预判天气。',
+    tableHeaders: ['生克/属性', '天气倾向', '原理说明'],
+    tableRows: [
+      ['日宿克日辰', '晴', '水火相激反主明朗'],
+      ['日辰克日宿', '阴晦', '能量受压阳光不显'],
+      ['比和(火)', '晴', '火旺主燥'],
+      ['比和(金/水)', '雨/雪', '寒湿凝结'],
+      ['比和(木)', '风', '气流涌动']
+    ],
+    bgColor: '#f0f9ff',
+    titleColor: '#0369a1'
   }
 ];
 
@@ -314,7 +329,7 @@ struct AdvancedStudyCases {
         Column() {
           // 标题与说明
           Column() {
-            Text('高级研习 · 知识点&案例库')
+            Text('高级研习 · 知识点与案例库')
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
               .fontColor('#1a1a1a')
@@ -459,7 +474,7 @@ struct AdvancedStudyCases {
             .onClick(() => this.openDialog())
 
           // 底部说明
-          Text('说明：本页面为「高级研习 · 知识点&案例库」，正式演算时请使用真实配置与排盘结果，不依赖本页模拟数据。')
+          Text('说明：本页面为「高级研习 · 知识点与案例库」，正式演算时请使用真实配置与排盘结果，不依赖本页模拟数据。')
             .fontSize(11)
             .fontColor('#888888')
             .width('100%')

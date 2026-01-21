@@ -2,7 +2,7 @@ import { common } from '@kit.AbilityKit';
 import { buffer, JSON as ArkJSON } from '@kit.ArkTS';
 import { router } from '@kit.ArkUI';
 import { CalendarManager, CalendarDayInfo } from '../utils/CalendarManager';
-import { calcTimeTrendFromCalendar, TimeRiskTag } from '../utils/Knowledge15x';
+import { calcTimeTrendFromCalendar, TimeRiskTag, calcWeatherPrediction, WeatherResult } from '../utils/Knowledge15x';
 
 // ============== 接口定义 ==============
 
@@ -291,6 +291,7 @@ struct Index {
   @State fourStars: FourStarsResult | null = null;
   @State dayInfo: CalendarDayInfo | null = null;
   @State timeTrendTags: TimeRiskTag[] = [];
+  @State weatherResult: WeatherResult | null = null;
 
   // 排盘结果
   @State resultKey: string = '';
@@ -434,8 +435,11 @@ struct Index {
     if (info) {
       const trend = await calcTimeTrendFromCalendar(info, this.context);
       this.timeTrendTags = trend.tags;
+      // 计算天气预测
+      this.weatherResult = calcWeatherPrediction(info, dayResult.element);
     } else {
       this.timeTrendTags = [];
+      this.weatherResult = null;
     }
   }
 
@@ -967,10 +971,47 @@ struct Index {
         .width('100%')
         .padding({ left: 16, right: 16, bottom: 16 })
 
-        // ========== 高级研习入口（知识点&案例库） ==========
+        // ========== 天时气象预测卡片 ==========
+        if (this.weatherResult) {
+          Row() {
+            Column() {
+              Row() {
+                Text('🌌 专题占 · 二十八宿气象')
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor('#0369a1')
+                Blank()
+                Text(this.weatherResult.label)
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#0369a1')
+                  .backgroundColor('#e0f2fe')
+                  .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+                  .borderRadius(6)
+              }
+              .width('100%')
+              .margin({ bottom: 6 })
+
+              Text(this.weatherResult.description)
+                .fontSize(11)
+                .fontColor('#4b5563')
+                .width('100%')
+                .lineHeight(16)
+            }
+            .layoutWeight(1)
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor('#f0f9ff')
+          .borderRadius(14)
+          .margin({ left: 16, right: 16, bottom: 12 })
+          .border({ width: 1, color: '#bae6fd' })
+        }
+
+        // ========== 高级研习入口（知识点与案例库） ==========
         Row() {
           Column() {
-            Text('📚 高级研习 · 知识点&案例库')
+            Text('📚 高级研习 · 知识点与案例库')
               .fontSize(15)
               .fontWeight(FontWeight.Medium)
               .fontColor('#312e81')

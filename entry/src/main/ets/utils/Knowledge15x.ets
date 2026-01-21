@@ -134,6 +134,70 @@ export interface Knowledge15xConfig {
 
 let cachedKnowledgeConfig: Knowledge15xConfig | null = null;
 
+export interface WeatherResult {
+  label: string;
+  description: string;
+}
+
+const NAYIN_ELEMENT_MAP: Record<string, string> = {
+  '甲子': '金', '乙丑': '金', '丙寅': '火', '丁卯': '火', '戊辰': '木', '己巳': '木', '庚午': '土', '辛未': '土', '壬申': '金', '癸酉': '金',
+  '甲戌': '火', '乙亥': '火', '丙子': '水', '丁丑': '水', '戊寅': '土', '己卯': '土', '庚辰': '金', '辛巳': '金', '壬午': '木', '癸未': '木',
+  '甲申': '水', '乙酉': '水', '丙戌': '土', '丁亥': '土', '戊子': '火', '己丑': '火', '庚寅': '木', '辛卯': '木', '壬辰': '水', '癸巳': '水',
+  '甲午': '金', '乙未': '金', '丙申': '火', '丁酉': '火', '戊戌': '木', '己亥': '木', '庚子': '土', '辛丑': '土', '壬寅': '金', '癸卯': '金',
+  '甲辰': '火', '乙巳': '火', '丙午': '水', '丁未': '水', '戊申': '土', '己酉': '土', '庚戌': '金', '辛亥': '金', '壬子': '木', '癸丑': '木',
+  '甲寅': '水', '乙卯': '水', '丙辰': '土', '丁巳': '土', '戊午': '火', '己未': '火', '庚申': '木', '辛酉': '木', '壬戌': '水', '癸亥': '水'
+};
+
+const ELEMENT_RELATION: Record<string, Record<string, string>> = {
+  '金': { '金': '比和', '木': '我克', '水': '我生', '火': '克我', '土': '生我' },
+  '木': { '金': '克我', '木': '比和', '水': '生我', '火': '我生', '土': '我克' },
+  '水': { '金': '生我', '木': '我生', '水': '比和', '火': '我克', '土': '克我' },
+  '火': { '金': '我克', '木': '生我', '水': '克我', '火': '比和', '土': '我生' },
+  '土': { '金': '生我', '木': '克我', '水': '我克', '火': '生我', '土': '比和' }
+};
+
+export function calcWeatherPrediction(day: CalendarDayInfo, dayStarElement: string): WeatherResult {
+  const ganZhi = `${day.day_gan}${day.day_zhi}`;
+  const dayElement = NAYIN_ELEMENT_MAP[ganZhi] || '土';
+  const starElement = dayStarElement;
+
+  const relation = ELEMENT_RELATION[dayElement]?.[starElement] || '比和';
+
+  let label = '未知';
+  let description = '';
+
+  if (relation === '我克') {
+    label = '阴晦';
+    description = '日辰克日宿，主能量受压，阴云密布。';
+  } else if (relation === '克我') {
+    label = '天晴';
+    description = '日宿克日辰，反主天朗气清，阳光明媚。';
+  } else if (relation === '我生') {
+    label = '阴天';
+    description = '日辰生日宿，能量泄化，云雾渐生。';
+  } else if (relation === '生我') {
+    label = '晴朗';
+    description = '日宿生日辰，气机回补，晴空万里。';
+  } else {
+    // 比和
+    if (dayElement === '火') {
+      label = '大晴';
+      description = '日宿日辰皆火，烈日当空。';
+    } else if (dayElement === '金' || dayElement === '水') {
+      label = '雨雪';
+      description = '日宿日辰寒湿比和，易生雨雪。';
+    } else if (dayElement === '木') {
+      label = '生风';
+      description = '日宿日辰皆木，气流涌动，主大风。';
+    } else {
+      label = '阴晦';
+      description = '日宿日辰皆土，气机滞塞，天色昏暗。';
+    }
+  }
+
+  return { label, description };
+}
+
 export async function loadKnowledge15xConfig(context: common.Context): Promise<Knowledge15xConfig | null> {
   if (cachedKnowledgeConfig) {
     return cachedKnowledgeConfig;
