@@ -261,8 +261,8 @@ struct Index {
             
             // 2. 核心信息展示层
             Column() {
-              // 日勤：[全称]
-              Text('日勤 · ' + this.dayStarResult.fullName)
+              // 日禽：[全称]
+              Text('日禽 · ' + this.dayStarResult.fullName)
                 .fontSize(36)
                 .fontWeight(FontWeight.Bolder)
                 .fontColor('#ffffff')
@@ -279,12 +279,12 @@ struct Index {
               // 选定日期
               Text(this.getDateString())
                 .fontSize(14)
-                .fontColor('#ffffffcc')
+                .fontColor('#ffffff') // 纯白色文字
                 .margin({ top: 40 })
                 .padding({ left: 18, right: 18, top: 8, bottom: 8 })
-                .backgroundColor('#ffffff15')
+                .backgroundColor('#00000088') // 深黑色半透明背景，确保对比度
                 .borderRadius(20)
-                .border({ width: 0.5, color: '#ffffff33' })
+                .border({ width: 0.5, color: '#ffffff44' })
             }
             .width('100%')
           }
