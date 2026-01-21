@@ -84,9 +84,6 @@ struct KnowledgeGraph {
 
   @State graphConfig: GraphConfig | null = null;
   @State hasLoaded: boolean = false;
-  @State scaleRatio: number = 1.0;
-  @State offsetX: number = 0;
-  @State offsetY: number = 0;
 
   // 用户学习进度（实际应从本地存储读取）
   @State userProgress: Record<string, string> = {
@@ -137,22 +134,16 @@ struct KnowledgeGraph {
     if (!this.graphConfig || !this.canvasContext) return;
 
     const ctx = this.canvasContext;
-    const width = 400; // 调整宽度以适应节点（最大x=330+35=365）
-    const height = 2400; // 增加画布高度以适应竖向布局
+    const width = 400; // 适应屏幕宽度
+    const height = 2400;
 
     // 清空画布
     ctx.clearRect(0, 0, width, height);
-    ctx.save();
-
-    // 应用缩放与偏移
-    ctx.translate(this.offsetX, this.offsetY);
-    ctx.scale(this.scaleRatio, this.scaleRatio);
 
     // 绘制主干线（竖向主轴）
     ctx.strokeStyle = '#d4af37';
     ctx.lineWidth = 4;
     ctx.beginPath();
-    // 从上到下的竖直线
     ctx.moveTo(180, 50);
     ctx.lineTo(180, 2350);
     ctx.stroke();
@@ -170,8 +161,6 @@ struct KnowledgeGraph {
     this.graphConfig.nodes.forEach((node: GraphNode) => {
       this.drawNode(ctx, node);
     });
-
-    ctx.restore();
   }
 
   private drawConnection(
@@ -208,13 +197,13 @@ struct KnowledgeGraph {
 
   private drawNode(ctx: CanvasRenderingContext2D, node: GraphNode): void {
     const pos = node.position;
-    const radius = 35; // 从70缩小到35（直径从140缩到70）
+    const radius = 50; // 增大节点半径
     const color = this.getNodeColor(node);
 
     // 绘制节点圆圈
     ctx.fillStyle = color;
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
     ctx.fill();
@@ -222,15 +211,15 @@ struct KnowledgeGraph {
 
     // 绘制节点图标（使用文本模拟）
     ctx.fillStyle = '#ffffff';
-    ctx.font = '28px sans-serif'; // 从56px调整到28px
+    ctx.font = '60px sans-serif'; // 从40px放大到60px（1.5倍）
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(node.icon, pos.x, pos.y);
 
     // 绘制节点标题
     ctx.fillStyle = '#333333';
-    ctx.font = 'bold 16px sans-serif'; // 从24px调整到16px
-    ctx.fillText(node.title, pos.x, pos.y + radius + 20);
+    ctx.font = 'bold 30px sans-serif'; // 从20px放大到30px（1.5倍）
+    ctx.fillText(node.title, pos.x, pos.y + radius + 35);
   }
 
   build() {
@@ -269,12 +258,12 @@ struct KnowledgeGraph {
       .border({ width: { bottom: 1 }, color: '#e0e0e0' })
 
       if (this.hasLoaded && this.graphConfig) {
-        // Scroll 容器支持竖向滚动
+        // Scroll容器支持竖向滚动
         Scroll() {
           Stack() {
             Canvas(this.canvasContext)
               .width('100%')
-              .height(2400) // 设置固定高度以容纳所有节点
+              .height(2400)
               .backgroundColor('#f8f8f8')
               .onReady(() => {
                 this.drawGraph();
@@ -284,11 +273,11 @@ struct KnowledgeGraph {
             Column() {
               ForEach(this.graphConfig.nodes, (node: GraphNode) => {
                 Row()
-                  .width(90) // 调整为匹配35px半径
-                  .height(90)
+                  .width(120) // 适配50px半径
+                  .height(120)
                   .position({
-                    x: node.position.x * this.scaleRatio + this.offsetX - 45,
-                    y: node.position.y * this.scaleRatio + this.offsetY - 45
+                    x: node.position.x - 60,
+                    y: node.position.y - 60
                   })
                   .onClick(() => {
                     this.navigateToNodeDetail(node);
@@ -297,63 +286,14 @@ struct KnowledgeGraph {
             }
             .width('100%')
             .height(2400)
-
-            // 缩放控制按钮
-            Column() {
-              Button('+')
-                .width(44)
-                .height(44)
-                .fontSize(24)
-                .backgroundColor('#ffffff')
-                .fontColor('#333333')
-                .borderRadius(22)
-                .shadow({ radius: 8, color: '#00000020' })
-                .onClick(() => {
-                  this.scaleRatio = Math.min(3.0, this.scaleRatio + 0.2);
-                  this.drawGraph();
-                })
-
-              Button('-')
-                .width(44)
-                .height(44)
-                .fontSize(24)
-                .backgroundColor('#ffffff')
-                .fontColor('#333333')
-                .borderRadius(22)
-                .margin({ top: 12 })
-                .shadow({ radius: 8, color: '#00000020' })
-                .onClick(() => {
-                  this.scaleRatio = Math.max(0.5, this.scaleRatio - 0.2);
-                  this.drawGraph();
-                })
-            }
-            .position({ x: '85%', y: '80%' })
           }
           .width('100%')
           .height(2400)
-          .gesture(
-            // 将手势绑定到Stack层，优先级更高
-            GestureGroup(GestureMode.Parallel,
-              PinchGesture({ fingers: 2 })
-                .onActionUpdate((event?: GestureEvent) => {
-                  if (event && event.scale) {
-                    this.scaleRatio = Math.max(0.5, Math.min(3.0, this.scaleRatio * event.scale));
-                    this.drawGraph();
-                  }
-                }),
-              PanGesture({ fingers: 1 })
-                .onActionUpdate((event?: GestureEvent) => {
-                  if (event && event.offsetX && event.offsetY) {
-                    this.offsetX += event.offsetX;
-                    this.offsetY += event.offsetY;
-                    this.drawGraph();
-                  }
-                })
-            )
-          )
         }
-        .scrollable(ScrollDirection.Vertical)
-        .scrollBar(BarState.Auto)
+        .width('100%')
+        .height('100%')
+        .scrollable(ScrollDirection.Vertical) // 仅支持竖向滚动
+        .scrollBar(BarState.Off) // 隐藏滚动条
         .edgeEffect(EdgeEffect.Spring)
         .layoutWeight(1)
 
