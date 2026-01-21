@@ -137,7 +137,7 @@ struct KnowledgeGraph {
     if (!this.graphConfig || !this.canvasContext) return;
 
     const ctx = this.canvasContext;
-    const width = 420; // 调整宽度以适应节点分布（最大x=330+50=380）
+    const width = 400; // 调整宽度以适应节点（最大x=330+35=365）
     const height = 2400; // 增加画布高度以适应竖向布局
 
     // 清空画布
@@ -208,13 +208,13 @@ struct KnowledgeGraph {
 
   private drawNode(ctx: CanvasRenderingContext2D, node: GraphNode): void {
     const pos = node.position;
-    const radius = 70; // 从50增加到70
+    const radius = 35; // 从70缩小到35（直径从140缩到70）
     const color = this.getNodeColor(node);
 
     // 绘制节点圆圈
     ctx.fillStyle = color;
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 5; // 从4增加到5
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
     ctx.fill();
@@ -222,15 +222,15 @@ struct KnowledgeGraph {
 
     // 绘制节点图标（使用文本模拟）
     ctx.fillStyle = '#ffffff';
-    ctx.font = '56px sans-serif'; // 从36px增加到56px
+    ctx.font = '28px sans-serif'; // 从56px调整到28px
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(node.icon, pos.x, pos.y);
 
     // 绘制节点标题
     ctx.fillStyle = '#333333';
-    ctx.font = 'bold 24px sans-serif'; // 从18px增加到24px
-    ctx.fillText(node.title, pos.x, pos.y + radius + 35);
+    ctx.font = 'bold 16px sans-serif'; // 从24px调整到16px
+    ctx.fillText(node.title, pos.x, pos.y + radius + 20);
   }
 
   build() {
@@ -279,35 +279,16 @@ struct KnowledgeGraph {
               .onReady(() => {
                 this.drawGraph();
               })
-              .gesture(
-                // 手势支持（缩放与水平拖动）
-                GestureGroup(GestureMode.Parallel,
-                  PinchGesture({ fingers: 2 })
-                    .onActionUpdate((event?: GestureEvent) => {
-                      if (event && event.scale) {
-                        this.scaleRatio = Math.max(0.5, Math.min(2.0, this.scaleRatio * event.scale));
-                        this.drawGraph();
-                      }
-                    }),
-                  PanGesture({ fingers: 1 })
-                    .onActionUpdate((event?: GestureEvent) => {
-                      if (event && event.offsetX) {
-                        this.offsetX += event.offsetX;
-                        this.drawGraph();
-                      }
-                    })
-                )
-              )
 
             // 节点点击检测层（透明覆盖层）
             Column() {
               ForEach(this.graphConfig.nodes, (node: GraphNode) => {
                 Row()
-                  .width(120) // 从80增加到120
-                  .height(120) // 从80增加到120
+                  .width(90) // 调整为匹配35px半径
+                  .height(90)
                   .position({
-                    x: node.position.x * this.scaleRatio + this.offsetX - 60,
-                    y: node.position.y * this.scaleRatio - 60
+                    x: node.position.x * this.scaleRatio + this.offsetX - 45,
+                    y: node.position.y * this.scaleRatio + this.offsetY - 45
                   })
                   .onClick(() => {
                     this.navigateToNodeDetail(node);
@@ -328,7 +309,7 @@ struct KnowledgeGraph {
                 .borderRadius(22)
                 .shadow({ radius: 8, color: '#00000020' })
                 .onClick(() => {
-                  this.scaleRatio = Math.min(2.0, this.scaleRatio + 0.1);
+                  this.scaleRatio = Math.min(3.0, this.scaleRatio + 0.2);
                   this.drawGraph();
                 })
 
@@ -342,7 +323,7 @@ struct KnowledgeGraph {
                 .margin({ top: 12 })
                 .shadow({ radius: 8, color: '#00000020' })
                 .onClick(() => {
-                  this.scaleRatio = Math.max(0.5, this.scaleRatio - 0.1);
+                  this.scaleRatio = Math.max(0.5, this.scaleRatio - 0.2);
                   this.drawGraph();
                 })
             }
@@ -350,6 +331,26 @@ struct KnowledgeGraph {
           }
           .width('100%')
           .height(2400)
+          .gesture(
+            // 将手势绑定到Stack层，优先级更高
+            GestureGroup(GestureMode.Parallel,
+              PinchGesture({ fingers: 2 })
+                .onActionUpdate((event?: GestureEvent) => {
+                  if (event && event.scale) {
+                    this.scaleRatio = Math.max(0.5, Math.min(3.0, this.scaleRatio * event.scale));
+                    this.drawGraph();
+                  }
+                }),
+              PanGesture({ fingers: 1 })
+                .onActionUpdate((event?: GestureEvent) => {
+                  if (event && event.offsetX && event.offsetY) {
+                    this.offsetX += event.offsetX;
+                    this.offsetY += event.offsetY;
+                    this.drawGraph();
+                  }
+                })
+            )
+          )
         }
         .scrollable(ScrollDirection.Vertical)
         .scrollBar(BarState.Auto)
