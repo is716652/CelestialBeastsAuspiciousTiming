@@ -207,6 +207,11 @@ interface StarImageryInfo {
   examples: string;
 }
 
+interface StarGroup {
+  name: string;
+  stars: string[];
+}
+
 @Entry
 @Component
 struct YanQinPanShi {
@@ -243,6 +248,23 @@ struct YanQinPanShi {
   
   // 用神选择
   @State selectedUseGodStar: string = '';
+  @State isShowUseGodSheet: boolean = false;
+
+  private starEmojis: Record<string, string> = {
+    '角': '🐉', '亢': '🐲', '氐': '🦡', '房': '🐰', '心': '🦊', '尾': '🐯', '箵': '🐆',
+    '斗': '🦄', '牛': '🐂', '女': '🦇', '虚': '🐀', '危': '燕', '室': '🐖', '壁': '🦌',
+    '奎': '🐺', '娄': '🐕', '胃': '雉', '昂': '🐓', '毕': ' crows', '觜': '🐒', '参': '🦍',
+    '井': '🐶', '鬼': '🐏', '柳': '🦌', '星': '🐎', '张': '🦌', '翼': '🐍', '轸': '🐛'
+  };
+  // 修正部分emoji: 毕(乌)、危(燕)、轸(蚓)、张(鹿)等
+  private starEmojiMap: Record<string, string> = {
+    '角': '🐉', '亢': '🐲', '氐': '🦡', '房': '🐰', '心': '🦊', '尾': '🐯', '箵': '🐆',
+    '斗': '獬', '牛': '🐂', '女': '🦇', '虚': '🐀', '危': '🕊️', '室': '🐖', '壁': '🦌',
+    '奎': '🐺', '娄': '🐕', '胃': '雉', '昂': '🐓', '毕': '🐦', '觜': '🐒', '参': '🦍',
+    '井': '🐕', '鬼': '🐏', '柳': '🦌', '星': '🐎', '张': '🦌', '翼': '🐍', '轸': '🐛'
+  };
+
+  private starGroups: StarGroup[] = [];
 
   // 吞啖结果
   @State tunDanDesc1: string = '';  // 地禽vs天禽
@@ -272,6 +294,13 @@ struct YanQinPanShi {
     for (let i = 1; i <= 31; i++) {
       this.days.push(i.toString());
     }
+
+    this.starGroups = [
+      { name: '东方青龙', stars: ['角', '亢', '氐', '房', '心', '尾', '箵'] },
+      { name: '北方玄武', stars: ['斗', '牛', '女', '虚', '危', '室', '壁'] },
+      { name: '西方白虎', stars: ['奎', '娄', '胃', '昂', '毕', '觜', '参'] },
+      { name: '南方朱雀', stars: ['井', '鬼', '柳', '星', '张', '翼', '轸'] }
+    ];
 
     // 获取路由参数
     const params = router.getParams() as PageParams;
@@ -888,31 +917,46 @@ struct YanQinPanShi {
 
           // 用神选择
           Row() {
-            Text('焦点用神')
-              .fontSize(12)
-              .fontColor('#666666')
-              .margin({ right: 8 })
+            Text('🎯 焦点用神')
+              .fontSize(14)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#333333')
             
-            Select([
-              { value: '不选择' },
-              ...this.stars28.map((s: string): SelectOption => ({ value: s + '宿' }))
-            ])
-              .value(this.selectedUseGodStar ? this.selectedUseGodStar + '宿' : '点击选择用神')
-              .onSelect((index: number) => {
-                if (index === 0) {
-                  this.selectedUseGodStar = '';
-                } else {
-                  this.selectedUseGodStar = this.stars28[index - 1];
-                }
-                this.calculateAll();
-              })
-              .height(32)
-              .backgroundColor('#e3f2fd')
-              .borderRadius(8)
-              .layoutWeight(1)
+            Blank()
+            
+            Row() {
+              if (this.selectedUseGodStar) {
+                Text(this.starEmojiMap[this.selectedUseGodStar] || '✨')
+                  .fontSize(18)
+                  .margin({ right: 4 })
+                Text(`${this.selectedUseGodStar}宿`)
+                  .fontSize(14)
+                  .fontColor('#d32f2f')
+                  .fontWeight(FontWeight.Medium)
+              } else {
+                Text('未选择')
+                  .fontSize(14)
+                  .fontColor('#999999')
+              }
+              Text(' 〉')
+                .fontSize(14)
+                .fontColor('#cccccc')
+            }
+            .padding({ left: 12, right: 8, top: 6, bottom: 6 })
+            .backgroundColor('#f5f5f5')
+            .borderRadius(20)
+            .onClick(() => {
+              this.isShowUseGodSheet = true;
+            })
           }
           .width('100%')
           .padding({ left: 16, right: 16 })
+          .margin({ bottom: 8 })
+          .bindSheet(this.isShowUseGodSheet, this.UseGodPicker(), {
+            height: SheetSize.MEDIUM,
+            title: { title: "选择焦点用神", subtitle: "28星宿分类速选" },
+            onDisappear: () => { this.isShowUseGodSheet = false }
+          })
         }
         .width('100%')
         .margin({ bottom: 16 })
@@ -1656,6 +1700,87 @@ struct YanQinPanShi {
     .backgroundColor('#f5f5f5')
   }
   
+  // ============== 锁泊宫位组件 - 天地盘双层展示 ==============
+  
+  @Builder
+  UseGodPicker() {
+    Column() {
+      Scroll() {
+        Column() {
+          // 重置选项
+          Row() {
+            Text('清除当前选择')
+              .fontSize(13)
+              .fontColor('#666666')
+              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+              .backgroundColor('#eeeeee')
+              .borderRadius(16)
+              .onClick(() => {
+                this.selectedUseGodStar = '';
+                this.calculateAll();
+                this.isShowUseGodSheet = false;
+              })
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.End)
+          .padding({ right: 16, top: 10, bottom: 4 })
+
+          ForEach(this.starGroups, (group: StarGroup) => {
+            Column() {
+              Text(group.name)
+                .fontSize(13)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#666666')
+                .width('100%')
+                .margin({ top: 16, bottom: 8, left: 16 })
+
+              Grid() {
+                ForEach(group.stars, (star: string) => {
+                  GridItem() {
+                    Column() {
+                      Text(this.starEmojiMap[star] || '✨')
+                        .fontSize(24)
+                      Text(star)
+                        .fontSize(12)
+                        .fontColor(this.selectedUseGodStar === star ? '#ffffff' : '#333333')
+                        .margin({ top: 4 })
+                    }
+                    .width('100%')
+                    .padding({ top: 10, bottom: 10 })
+                    .backgroundColor(this.selectedUseGodStar === star ? '#d32f2f' : '#ffffff')
+                    .borderRadius(12)
+                    .border({ width: 1, color: this.selectedUseGodStar === star ? '#d32f2f' : '#eeeeee' })
+                    .onClick(() => {
+                      this.selectedUseGodStar = star;
+                      this.calculateAll();
+                      this.isShowUseGodSheet = false;
+                    })
+                  }
+                })
+              }
+              .columnsTemplate('1fr 1fr 1fr 1fr')
+              .columnsGap(8)
+              .rowsGap(8)
+              .padding({ left: 16, right: 16 })
+              .height(160) // 7个星宿两行高度
+            }
+          })
+          
+          // 底部留白，防止被系统手势栏遮挡
+          Row().height(40).width('100%')
+        }
+        .width('100%')
+      }
+      .scrollable(ScrollDirection.Vertical)
+      .scrollBar(BarState.Auto)
+      .width('100%')
+      .height('100%')
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor('#f7f7f7')
+  }
+
   // 空宫位
   @Builder
   EmptyPalace() {

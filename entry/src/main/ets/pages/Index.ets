@@ -63,6 +63,21 @@ struct Index {
 
   @State hasLoaded: boolean = false;
   @State starRulesConfig: YanqinStarRulesConfig | null = null;
+  @State dayStarResult: DayStarCalcResult | null = null;
+
+  private starEmojiMap: Record<string, string> = {
+    '角': '🐉', '亢': '🐲', '氐': '🦡', '房': '🐰', '心': '🦊', '尾': '🐯', '箵': '🐆',
+    '斗': '獬', '牛': '🐂', '女': '蝙', '虚': '🐀', '危': '🕊️', '室': '🐖', '壁': '🦌',
+    '奎': '🐺', '娄': '🐕', '胃': '雉', '昂': '🐓', '毕': '🐦', '觜': '🐒', '参': '🦍',
+    '井': '🐕', '鬼': '🐏', '柳': '🦌', '星': '🐎', '张': '🦌', '翼': '🐍', '轸': '🐛'
+  };
+
+  private starToSymbolMap: Record<string, string> = {
+    '角': '东方青龙', '亢': '东方青龙', '氐': '东方青龙', '房': '东方青龙', '心': '东方青龙', '尾': '东方青龙', '箕': '东方青龙',
+    '斗': '北方玄武', '牛': '北方玄武', '女': '北方玄武', '虚': '北方玄武', '危': '北方玄武', '室': '北方玄武', '壁': '北方玄武',
+    '奎': '西方白虎', '娄': '西方白虎', '胃': '西方白虎', '昴': '西方白虎', '毕': '西方白虎', '觜': '西方白虎', '参': '西方白虎',
+    '井': '南方朱雀', '鬼': '南方朱雀', '柳': '南方朱雀', '星': '南方朱雀', '张': '南方朱雀', '翼': '南方朱雀', '轸': '南方朱雀'
+  };
 
   @State selectedYear: number = new Date().getFullYear();
   @State selectedMonth: number = new Date().getMonth() + 1;
@@ -144,6 +159,7 @@ struct Index {
     const starRules = await this.loadJsonFromRaw<YanqinStarRulesConfig>('yanqin_star_rules.json');
     if (starRules) {
       this.starRulesConfig = starRules;
+      this.dayStarResult = this.calculateDayStar(this.selectedYear, this.selectedMonth, this.selectedDay, starRules);
       this.hasLoaded = true;
     }
   }
@@ -234,86 +250,99 @@ struct Index {
   build() {
     Scroll() {
       Column() {
-        // 顶部标题
-        Column() {
-          Text('禽星演寻')
-            .fontSize(32)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#1a1a1a')
-          Text('传统演禽术 · 数字化研习平台')
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ top: 8 })
-        }
-        .width('100%')
-        .padding({ top: 60, bottom: 30 })
-        .alignItems(HorizontalAlign.Center)
-
-        if (this.hasLoaded) {
-          // ========== 日期快速预览/选择 ==========
-          Column() {
-            Row() {
-              Text('📅 当前选定')
-                .fontSize(15)
+        if (this.hasLoaded && this.dayStarResult) {
+          // ========== 顶部：神秘演禽天盘 (Celestial Disk) ==========
+          Stack() {
+            // 1. 沉浸式星空背景图
+            Image($r('app.media.qinxing_celestial_bg'))
+              .width('100%')
+              .height('100%')
+              .objectFit(ImageFit.Cover)
+            
+            // 2. 核心信息展示层
+            Column() {
+              // 日勤：[全称]
+              Text('日勤 · ' + this.dayStarResult.fullName)
+                .fontSize(36)
+                .fontWeight(FontWeight.Bolder)
+                .fontColor('#ffffff')
+                .shadow({ radius: 20, color: '#000000', offsetX: 4, offsetY: 4 })
+              
+              // 术语归属 (东方青龙/北方玄武 等)
+              Text(this.starToSymbolMap[this.dayStarResult.star] || '')
+                .fontSize(20)
                 .fontWeight(FontWeight.Medium)
-                .fontColor('#333333')
-              Blank()
+                .fontColor('#d4af37') // 古典金，与星图质感匹配
+                .margin({ top: 15 })
+                .shadow({ radius: 10, color: '#000000', offsetX: 2, offsetY: 2 })
+
+              // 选定日期
               Text(this.getDateString())
                 .fontSize(14)
-                .fontColor('#3d6b4f')
-                .fontWeight(FontWeight.Bold)
+                .fontColor('#ffffffcc')
+                .margin({ top: 40 })
+                .padding({ left: 18, right: 18, top: 8, bottom: 8 })
+                .backgroundColor('#ffffff15')
+                .borderRadius(20)
+                .border({ width: 0.5, color: '#ffffff33' })
             }
             .width('100%')
-            .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-            .backgroundColor('#ffffff')
-            .borderRadius(14)
-            .margin({ bottom: 20 })
-            .border({ width: 1, color: '#e0e0e0' })
           }
-          .padding({ left: 16, right: 16 })
-
-          // ========== 核心功能入口 (2列网格) ==========
-          Grid() {
-            GridItem() {
-              this.MenuCard('📍', '方位推演', '走失寻物·取象', '#3d6b4f', '#f5f9f6', 'pages/LostItemsSearch')
-            }
-            GridItem() {
-              this.MenuCard('📅', '演禽盘式', '三传四课·排盘', '#1a5276', '#e8f4fc', 'pages/YanQinPanShi')
-            }
-            GridItem() {
-              this.MenuCard('🌌', '演禽气象', '天时预测·晴雨', '#0369a1', '#f0f9ff', 'pages/WeatherMeteorology')
-            }
-            GridItem() {
-              this.MenuCard('🏗️', '演禽造葬', '施工动土·避忌', '#7c2d12', '#fff7ed', 'pages/ConstructionBurial')
-            }
-            GridItem() {
-              this.MenuCard('📚', '知识点与案例库', '高阶规则·案例', '#4c1d95', '#f5f3ff', 'pages/AdvancedStudyCases')
-            }
-            GridItem() {
-              this.MenuCard('📝', '学习文档', '分级学习路径', '#1f2937', '#f3f4f6', 'pages/AdvancedStudyCases')
-            }
-          }
-          .columnsTemplate('1fr 1fr')
-          .columnsGap(12)
-          .rowsGap(12)
-          .padding({ left: 16, right: 16, bottom: 30 })
           .width('100%')
           .height(420)
+          .clip(true)
+
+          // ========== 功能导航区域 ==========
+          Column() {
+            Text('—— 演禽秘要 · 功法模块 ——')
+              .fontSize(13)
+              .fontColor('#666666')
+              .margin({ top: 20, bottom: 20 })
+
+            Grid() {
+              GridItem() {
+                this.MenuCard('📍', '方位推演', '寻物占测', '#3d6b4f', 'pages/LostItemsSearch')
+              }
+              GridItem() {
+                this.MenuCard('🧭', '演禽盘式', '三传四课', '#1a5276', 'pages/YanQinPanShi')
+              }
+              GridItem() {
+                this.MenuCard('☁️', '演禽气象', '天时占雨', '#0284c7', 'pages/WeatherMeteorology')
+              }
+              GridItem() {
+                this.MenuCard('🏗️', '演禽造葬', '动土择吉', '#b45309', 'pages/ConstructionBurial')
+              }
+            }
+            .columnsTemplate('1fr 1fr')
+            .columnsGap(15)
+            .rowsGap(15)
+            .padding({ left: 20, right: 20 })
+            .width('100%')
+            .height(240)
+
+            // 底部次级模块
+            Row() {
+              this.SmallActionCard('📚 案例库', 'pages/AdvancedStudyCases')
+              this.SmallActionCard('📝 研习路径', 'pages/AdvancedStudyCases')
+            }
+            .width('100%')
+            .padding({ left: 20, right: 20, top: 20 })
+            .margin({ bottom: 40 })
+          }
+          .width('100%')
+          .backgroundColor('#f8f8f8') // 下方功能区回归浅色，对比出天盘的深邃
+          .borderRadius({ topLeft: 30, topRight: 30 }) // 圆格过渡
+          .margin({ top: -30 }) // 与天盘衔接
+
         } else {
           // 加载中
           Column() {
-            LoadingProgress()
-              .width(40)
-              .height(40)
-              .color('#888888')
-            Text('正在加载配置...')
-              .fontSize(14)
-              .fontColor('#888888')
-              .margin({ top: 12 })
+            LoadingProgress().width(40).height(40).color('#3d6b4f')
+            Text('开启演禽秘境...').fontSize(14).fontColor('#666666').margin({ top: 12 })
           }
           .width('100%')
-          .padding({ top: 60 })
-          .alignItems(HorizontalAlign.Center)
+          .height('100%')
+          .justifyContent(FlexAlign.Center)
         }
 
         // 底部版本信息
@@ -332,26 +361,47 @@ struct Index {
   }
 
   @Builder
-  MenuCard(icon: string, title: string, desc: string, color: string, bgColor: string, url: string) {
+  SmallActionCard(title: string, url: string) {
+    Row() {
+      Text(title)
+        .fontSize(14)
+        .fontWeight(FontWeight.Medium)
+        .fontColor('#555555')
+    }
+    .layoutWeight(1)
+    .height(50)
+    .margin({ left: 4, right: 4 })
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor('#ffffff')
+    .borderRadius(12)
+    .border({ width: 1, color: '#e0e0e0' })
+    .onClick(() => {
+      router.pushUrl({ url: url })
+    })
+  }
+
+  @Builder
+  MenuCard(icon: string, title: string, desc: string, color: string, url: string) {
     Column() {
       Text(icon)
-        .fontSize(32)
-        .margin({ bottom: 8 })
+        .fontSize(28)
+        .margin({ bottom: 6 })
       Text(title)
-        .fontSize(16)
+        .fontSize(15)
         .fontWeight(FontWeight.Bold)
-        .fontColor(color)
+        .fontColor('#333333')
       Text(desc)
         .fontSize(10)
-        .fontColor('#666666')
+        .fontColor('#999999')
         .margin({ top: 4 })
     }
     .width('100%')
-    .height(130)
+    .height(100)
     .justifyContent(FlexAlign.Center)
-    .backgroundColor(bgColor)
-    .borderRadius(16)
-    .border({ width: 1, color: color, style: BorderStyle.Solid })
+    .backgroundColor('#ffffff')
+    .borderRadius(18)
+    .shadow({ radius: 8, color: '#00000005', offsetX: 0, offsetY: 2 })
+    .border({ width: 1, color: '#f0f0f0' })
     .onClick(() => {
       router.pushUrl({
         url: url,

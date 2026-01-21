@@ -85,6 +85,11 @@ interface RulesConfig {
   branch_meanings: Record<string, BranchMeaning>;
 }
 
+interface StarGroup {
+  name: string;
+  stars: string[];
+}
+
 interface BranchMeaning {
   direction: string;
   element: string;
@@ -145,6 +150,16 @@ struct LostItemsSearch {
   @State useGodMode: number = 0;  // 0=传统分类, 1=自定义用神
   @State selectedCategoryIndex: number = 0;  // 传统分类索引
   @State selectedUseGodStar: string = '参';  // 自定义用神星宿
+  @State isShowUseGodSheet: boolean = false;
+
+  private starEmojiMap: Record<string, string> = {
+    '角': '🐉', '亢': '🐲', '氐': '🦡', '房': '🐰', '心': '🦊', '尾': '🐯', '箵': ' leopards',
+    '斗': '獬', '牛': '🐂', '女': '🦇', '虚': '🐀', '危': '🕊️', '室': '🐖', '壁': '🦌',
+    '奎': '🐺', '娄': '🐕', '胃': '雉', '昂': '🐓', '毕': '🐦', '觜': '🐒', '参': '🦍',
+    '井': '🐕', '鬼': '🐏', '柳': '🦌', '星': '🐎', '张': '🦌', '翼': '🐍', '轸': '🐛'
+  };
+
+  private starGroups: StarGroup[] = [];
 
   // 四禽计算结果
   @State fourStars: FourStarsResult | null = null;
@@ -197,6 +212,14 @@ struct LostItemsSearch {
   @State hourOptions: SelectOption[] = [];
 
   aboutToAppear(): void {
+    // 初始化分类数据
+    this.starGroups = [
+      { name: '东方青龙', stars: ['角', '亢', '氐', '房', '心', '尾', '箵'] },
+      { name: '北方玄武', stars: ['斗', '牛', '女', '虚', '危', '室', '壁'] },
+      { name: '西方白虎', stars: ['奎', '娄', '胃', '昂', '毕', '觜', '参'] },
+      { name: '南方朱雀', stars: ['井', '鬼', '柳', '星', '张', '翼', '轸'] }
+    ];
+
     const params = router.getParams() as Record<string, number>;
     if (params) {
       this.selectedYear = params.year || this.selectedYear;
@@ -430,12 +453,42 @@ struct LostItemsSearch {
             } else if (this.starRulesConfig) {
               // 二十八宿自定义选择
               Column() {
-                Text('选择对应星宿：').fontSize(13).fontColor('#666666').margin({ bottom: 8 }).width('100%')
-                Select(this.starRulesConfig.constellations_order.map(s => ({ value: s } as SelectOption)))
-                  .selected(this.starRulesConfig.constellations_order.indexOf(this.selectedUseGodStar))
-                  .value(this.selectedUseGodStar)
-                  .width('100%')
-                  .onSelect(v => this.selectedUseGodStar = this.starRulesConfig!.constellations_order[v])
+                Text('点击图标选择对应星宿：').fontSize(13).fontColor('#666666').margin({ bottom: 8 }).width('100%')
+                
+                Row() {
+                  Text(this.starEmojiMap[this.selectedUseGodStar] || '✨')
+                    .fontSize(24)
+                    .margin({ right: 10 })
+                  
+                  Column() {
+                    Text(`${this.selectedUseGodStar}宿`)
+                      .fontSize(16)
+                      .fontWeight(FontWeight.Bold)
+                      .fontColor('#d32f2f')
+                    Text(this.starRulesConfig.constellations_full[this.selectedUseGodStar]?.full_name || '')
+                      .fontSize(11)
+                      .fontColor('#999999')
+                  }
+                  .alignItems(HorizontalAlign.Start)
+                  .layoutWeight(1)
+
+                  Text('切换 〉')
+                    .fontSize(14)
+                    .fontColor('#1a5276')
+                    .fontWeight(FontWeight.Medium)
+                }
+                .width('100%')
+                .padding(12)
+                .backgroundColor('#f5f5f5')
+                .borderRadius(12)
+                .onClick(() => {
+                  this.isShowUseGodSheet = true;
+                })
+                .bindSheet(this.isShowUseGodSheet, this.UseGodPicker(), {
+                  height: SheetSize.MEDIUM,
+                  title: { title: "选择自定义用神", subtitle: "28星宿分类速选" },
+                  onDisappear: () => { this.isShowUseGodSheet = false }
+                })
                 
                 Text(`类象特征：${this.starExtendedMeanings[this.selectedUseGodStar] || '暂无说明'}`)
                   .fontSize(12).fontColor('#3d6b4f').margin({ top: 10 }).width('100%').lineHeight(16)
@@ -470,5 +523,64 @@ struct LostItemsSearch {
       }
     }
     .width('100%').height('100%').backgroundColor('#f8f8f8')
+  }
+
+  @Builder
+  UseGodPicker() {
+    Column() {
+      Scroll() {
+        Column() {
+          ForEach(this.starGroups, (group: StarGroup) => {
+            Column() {
+              Text(group.name)
+                .fontSize(13)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#666666')
+                .width('100%')
+                .margin({ top: 16, bottom: 8, left: 16 })
+
+              Grid() {
+                ForEach(group.stars, (star: string) => {
+                  GridItem() {
+                    Column() {
+                      Text(this.starEmojiMap[star] || '✨')
+                        .fontSize(24)
+                      Text(star)
+                        .fontSize(12)
+                        .fontColor(this.selectedUseGodStar === star ? '#ffffff' : '#333333')
+                        .margin({ top: 4 })
+                    }
+                    .width('100%')
+                    .padding({ top: 10, bottom: 10 })
+                    .backgroundColor(this.selectedUseGodStar === star ? '#d32f2f' : '#ffffff')
+                    .borderRadius(12)
+                    .border({ width: 1, color: this.selectedUseGodStar === star ? '#d32f2f' : '#eeeeee' })
+                    .onClick(() => {
+                      this.selectedUseGodStar = star;
+                      this.isShowUseGodSheet = false;
+                    })
+                  }
+                })
+              }
+              .columnsTemplate('1fr 1fr 1fr 1fr')
+              .columnsGap(8)
+              .rowsGap(8)
+              .padding({ left: 16, right: 16 })
+              .height(160)
+            }
+          })
+          
+          Row().height(40).width('100%')
+        }
+        .width('100%')
+      }
+      .scrollable(ScrollDirection.Vertical)
+      .scrollBar(BarState.Auto)
+      .width('100%')
+      .height('100%')
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor('#f7f7f7')
   }
 }
