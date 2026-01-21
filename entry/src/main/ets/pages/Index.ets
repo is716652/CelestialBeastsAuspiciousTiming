@@ -322,8 +322,8 @@ struct Index {
 
             // 底部次级模块
             Row() {
-              this.SmallActionCard('📚 案例库', 'pages/AdvancedStudyCases')
-              this.SmallActionCard('📝 研习路径', 'pages/AdvancedStudyCases')
+              this.SmallActionCard('案例库', 'pages/AdvancedStudyCases')
+              this.SmallActionCard('知识图谱', 'pages/KnowledgeGraph')
             }
             .width('100%')
             .padding({ left: 20, right: 20, top: 20 })
@@ -362,14 +362,29 @@ struct Index {
 
   @Builder
   SmallActionCard(title: string, url: string) {
-    Row() {
+    Column() {
+      // 根据标题条件渲染图标
+      if (title === '知识图谱') {
+        Image($r('app.media.knowledge_graph_icon'))
+          .width(40)
+          .height(40)
+          .borderRadius(8)
+          .margin({ bottom: 6 })
+      } else if (title === '案例库') {
+        Image($r('app.media.case_library_icon'))
+          .width(40)
+          .height(40)
+          .borderRadius(8)
+          .margin({ bottom: 6 })
+      }
+
       Text(title)
-        .fontSize(14)
+        .fontSize(13)
         .fontWeight(FontWeight.Medium)
         .fontColor('#555555')
     }
     .layoutWeight(1)
-    .height(50)
+    .height(80)
     .margin({ left: 4, right: 4 })
     .justifyContent(FlexAlign.Center)
     .backgroundColor('#ffffff')

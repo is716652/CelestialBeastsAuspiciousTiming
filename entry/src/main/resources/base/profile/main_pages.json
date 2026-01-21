@@ -6,6 +6,8 @@
     "pages/AdvancedStudyCases",
     "pages/LostItemsSearch",
     "pages/WeatherMeteorology",
-    "pages/ConstructionBurial"
+    "pages/ConstructionBurial",
+    "pages/KnowledgeGraph",
+    "pages/NodeDetail"
   ]
 }
