@@ -383,9 +383,31 @@ struct Index {
   @Builder
   MenuCard(icon: string, title: string, desc: string, color: string, url: string) {
     Column() {
-      Text(icon)
-        .fontSize(28)
-        .margin({ bottom: 6 })
+      // 为演禽盘式、演禽气象、演禽造葬显示图片图标，其他使用 Emoji
+      if (title === '演禽盘式') {
+        Image($r('app.media.yanqin_pan_icon'))
+          .width(50)
+          .height(50)
+          .borderRadius(25)
+          .margin({ bottom: 6 })
+      } else if (title === '演禽气象') {
+        Image($r('app.media.weather_icon'))
+          .width(50)
+          .height(50)
+          .borderRadius(25)
+          .margin({ bottom: 6 })
+      } else if (title === '演禽造葬') {
+        Image($r('app.media.fengshui_icon'))
+          .width(50)
+          .height(50)
+          .borderRadius(25)
+          .margin({ bottom: 6 })
+      } else {
+        Text(icon)
+          .fontSize(28)
+          .margin({ bottom: 6 })
+      }
+      
       Text(title)
         .fontSize(15)
         .fontWeight(FontWeight.Bold)
@@ -396,7 +418,7 @@ struct Index {
         .margin({ top: 4 })
     }
     .width('100%')
-    .height(100)
+    .height(110) // 调高以适应图片
     .justifyContent(FlexAlign.Center)
     .backgroundColor('#ffffff')
     .borderRadius(18)
