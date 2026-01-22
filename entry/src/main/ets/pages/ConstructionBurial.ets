@@ -3,6 +3,8 @@ import { buffer, JSON as ArkJSON } from '@kit.ArkTS';
 import { router } from '@kit.ArkUI';
 import { CalendarManager, CalendarDayInfo } from '../utils/CalendarManager';
 import { loadBurialRulesConfig, calcBurialPrediction, BurialRulesConfig, BurialResult } from '../utils/Knowledge15x';
+import { getQiYaoTypeFromStar, getQiYaoInfo, QiYaoInfo } from '../utils/QiYaoUtils';
+import { evaluateDayQuality, DayQualityEvaluation } from '../utils/BaoYiZhuanUtils';
 
 interface ConstellationInfo {
   full_name: string;
@@ -37,6 +39,8 @@ struct ConstructionBurial {
   @State starRulesConfig: YanqinStarRulesConfig | null = null;
   @State burialRulesConfig: BurialRulesConfig | null = null;
   @State currentDayStar: string = '';
+  @State dayQiYaoInfo: QiYaoInfo | null = null;
+  @State dayLevelInfo: DayQualityEvaluation | null = null;
 
   @State yearOptions: SelectOption[] = [];
   @State monthOptions: SelectOption[] = [];
@@ -86,6 +90,15 @@ struct ConstructionBurial {
       const dayStar = this.calculateDayStar(this.selectedYear, this.selectedMonth, this.selectedDay);
       this.currentDayStar = dayStar;
       this.burialResult = calcBurialPrediction(info, dayStar, this.burialRulesConfig);
+      
+      // 获取七曜信息
+      const qiYaoType = getQiYaoTypeFromStar(dayStar);
+      if (qiYaoType) {
+        this.dayQiYaoInfo = getQiYaoInfo(qiYaoType);
+      }
+      
+      // 评估宝义专日
+      this.dayLevelInfo = evaluateDayQuality(info.day_gan, info.year_gan);
     }
   }
 
@@ -156,6 +169,11 @@ struct ConstructionBurial {
             }
             .padding(20).backgroundColor('#fff7ed').borderRadius(16).margin({ left: 16, right: 16, bottom: 16 }).border({ width: 1, color: '#fed7aa' })
             
+            // ========== 七曜与宝义专日建议 ==========
+            if (this.dayQiYaoInfo && this.dayLevelInfo) {
+              this.QiYaoBaoYiZhuanCard()
+            }
+            
             Column() {
               Text('【研习要点说明】').fontSize(14).fontWeight(FontWeight.Bold).margin({ bottom: 8 })
               Text('1. 登垣：禽星值其本宫之日，能量最旺。\n2. 纳音禁忌：择日需避开日干支纳音克星宿五行。\n3. 伏断：特定的星日组合，主气机不接，重大工程避之。').fontSize(13).lineHeight(20).fontColor('#666666')
@@ -166,5 +184,131 @@ struct ConstructionBurial {
       }
     }
     .width('100%').height('100%').backgroundColor('#f8f8f8')
+  }
+
+  @Builder
+  QiYaoBaoYiZhuanCard() {
+    Column() {
+      Text('── 本日七曜与宝义专日建议 ──')
+        .fontSize(13)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#333333')
+        .margin({ bottom: 12 })
+
+      Row() {
+        // 左侧：七曜总断
+        Column() {
+          Row() {
+            Text('🌟')
+              .fontSize(16)
+              .margin({ right: 4 })
+            Text(this.dayQiYaoInfo!.name)
+              .fontSize(13)
+              .fontColor(this.dayQiYaoInfo!.color)
+              .fontWeight(FontWeight.Bold)
+          }
+          .margin({ bottom: 8 })
+
+          Text('性质：' + this.dayQiYaoInfo!.nature)
+            .fontSize(11)
+            .fontColor('#666666')
+            .width('100%')
+            .margin({ bottom: 6 })
+
+          if (this.dayQiYaoInfo!.suitableEvents.filter(e => e !== '埋葬' && e !== '阴宅修造' && e !== '百事皆宜').length > 0) {
+            Text('✅ ' + this.dayQiYaoInfo!.suitableEvents.filter(e => e !== '埋葬' && e !== '阴宅修造' && e !== '百事皆宜').slice(0, 3).join('、'))
+              .fontSize(11)
+              .fontColor('#4caf50')
+              .width('100%')
+              .margin({ bottom: 4 })
+          }
+
+          if (this.dayQiYaoInfo!.avoidEvents.filter(e => e !== '百事皆忌').length > 0) {
+            Text('❌ ' + this.dayQiYaoInfo!.avoidEvents.filter(e => e !== '百事皆忌').slice(0, 3).join('、'))
+              .fontSize(11)
+              .fontColor('#f44336')
+              .width('100%')
+          }
+        }
+        .layoutWeight(1)
+        .padding(12)
+        .backgroundColor('#f5f5f5')
+        .borderRadius(10)
+        .alignItems(HorizontalAlign.Start)
+
+        // 右侧：宝义专日
+        Column() {
+          Row() {
+            Text(this.dayLevelInfo!.dayLevelInfo.emoji)
+              .fontSize(16)
+              .margin({ right: 4 })
+            Text(this.dayLevelInfo!.dayLevelInfo.name)
+              .fontSize(13)
+              .fontColor(this.dayLevelInfo!.dayLevelInfo.color)
+              .fontWeight(FontWeight.Bold)
+          }
+          .margin({ bottom: 8 })
+
+          Text(this.dayLevelInfo!.dayLevelInfo.description)
+            .fontSize(11)
+            .fontColor('#666666')
+            .width('100%')
+            .margin({ bottom: 6 })
+
+          if (this.dayLevelInfo!.isChenFanJun) {
+            Text('⚠️ 臣犯君大忌')
+              .fontSize(11)
+              .fontColor('#f44336')
+              .fontWeight(FontWeight.Bold)
+              .width('100%')
+              .padding(6)
+              .backgroundColor('#ffebee')
+              .borderRadius(6)
+              .margin({ bottom: 6 })
+          }
+
+          Text('💡 ' + this.dayLevelInfo!.recommendation.slice(0, 30) + '...')
+            .fontSize(10)
+            .fontColor('#2196f3')
+            .width('100%')
+            .lineHeight(14)
+        }
+        .layoutWeight(1)
+        .padding(12)
+        .backgroundColor('#e3f2fd')
+        .borderRadius(10)
+        .alignItems(HorizontalAlign.Start)
+        .margin({ left: 8 })
+      }
+      .width('100%')
+
+      // 适配建议
+      if (this.dayQiYaoInfo!.suitableEvents.includes('埋葬') || this.dayQiYaoInfo!.name === '月曜' || this.dayQiYaoInfo!.name === '火曜') {
+        Text('✨ 当日七曜' + this.dayQiYaoInfo!.name + '，适宜造葬事宜！')
+          .fontSize(12)
+          .fontColor('#3d6b4f')
+          .fontWeight(FontWeight.Bold)
+          .width('100%')
+          .margin({ top: 10 })
+          .padding(8)
+          .backgroundColor('#d1fae5')
+          .borderRadius(8)
+      } else if (this.dayQiYaoInfo!.avoidEvents.includes('阴宅修造') || this.dayQiYaoInfo!.name === '水曜' || this.dayQiYaoInfo!.name === '土曜') {
+        Text('⚠️ 当日七曜' + this.dayQiYaoInfo!.name + '，不宜造葬，请慎重选择！')
+          .fontSize(12)
+          .fontColor('#991b1b')
+          .fontWeight(FontWeight.Bold)
+          .width('100%')
+          .margin({ top: 10 })
+          .padding(8)
+          .backgroundColor('#fee2e2')
+          .borderRadius(8)
+      }
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor('#ffffff')
+    .borderRadius(14)
+    .margin({ left: 16, right: 16, bottom: 16 })
   }
 }

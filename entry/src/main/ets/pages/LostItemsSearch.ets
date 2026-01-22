@@ -4,6 +4,8 @@ import { router } from '@kit.ArkUI';
 import { LengthMetrics } from '@kit.ArkUI';
 import { CalendarManager, CalendarDayInfo } from '../utils/CalendarManager';
 import { calcTimeTrendFromCalendar, TimeRiskTag } from '../utils/Knowledge15x';
+import { getQiYaoTypeFromStar, getQiYaoInfo, QiYaoInfo } from '../utils/QiYaoUtils';
+import { evaluateDayQuality, DayQualityEvaluation } from '../utils/BaoYiZhuanUtils';
 
 // ============== 接口定义 ==============
 
@@ -165,6 +167,8 @@ struct LostItemsSearch {
   @State fourStars: FourStarsResult | null = null;
   @State dayInfo: CalendarDayInfo | null = null;
   @State timeTrendTags: TimeRiskTag[] = [];
+  @State dayQiYaoInfo: QiYaoInfo | null = null;
+  @State dayLevelInfo: DayQualityEvaluation | null = null;
 
   // 排盘结果
   @State resultKey: string = '';
@@ -292,6 +296,15 @@ struct LostItemsSearch {
     if (info) {
       const trend = await calcTimeTrendFromCalendar(info, this.context);
       this.timeTrendTags = trend.tags;
+      
+      // 获取七曜信息
+      const qiYaoType = getQiYaoTypeFromStar(dayResult.star);
+      if (qiYaoType) {
+        this.dayQiYaoInfo = getQiYaoInfo(qiYaoType);
+      }
+      
+      // 评估宝义专日
+      this.dayLevelInfo = evaluateDayQuality(info.day_gan, info.year_gan);
     }
   }
 
@@ -497,6 +510,11 @@ struct LostItemsSearch {
           }
           .padding(16).backgroundColor('#ffffff').borderRadius(12).margin({ left: 16, right: 16, bottom: 16 })
 
+          // ========== 七曜与宝义专日标签 ==========
+          if (this.dayQiYaoInfo && this.dayLevelInfo) {
+            this.TimeTrendTagsCard()
+          }
+
           // 演算按钮
           Button('执行方位推演')
             .width('90%').height(48).backgroundColor('#3d6b4f').margin({ bottom: 16, top: 8 })
@@ -523,6 +541,101 @@ struct LostItemsSearch {
       }
     }
     .width('100%').height('100%').backgroundColor('#f8f8f8')
+  }
+
+  @Builder
+  TimeTrendTagsCard() {
+    Column() {
+      Text('── 本日时间能量评估 ──')
+        .fontSize(13)
+        .fontColor('#666666')
+        .margin({ bottom: 12 })
+
+      Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
+        // 七曜标签
+        Row() {
+          Text('🌟')
+            .fontSize(14)
+            .margin({ right: 4 })
+          Text(this.dayQiYaoInfo!.name)
+            .fontSize(12)
+            .fontColor(this.dayQiYaoInfo!.color)
+            .fontWeight(FontWeight.Bold)
+        }
+        .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+        .backgroundColor(this.dayQiYaoInfo!.color + '20')
+        .borderRadius(14)
+        .margin({ right: 8, bottom: 8 })
+        .border({ width: 1, color: this.dayQiYaoInfo!.color })
+
+        // 宝义专日标签
+        Row() {
+          Text(this.dayLevelInfo!.dayLevelInfo.emoji)
+            .fontSize(14)
+            .margin({ right: 4 })
+          Text(this.dayLevelInfo!.dayLevelInfo.name)
+            .fontSize(12)
+            .fontColor(this.dayLevelInfo!.dayLevelInfo.color)
+            .fontWeight(FontWeight.Bold)
+        }
+        .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+        .backgroundColor(this.dayLevelInfo!.dayLevelInfo.color + '20')
+        .borderRadius(14)
+        .margin({ right: 8, bottom: 8 })
+        .border({ width: 1, color: this.dayLevelInfo!.dayLevelInfo.color })
+
+        // 臣犯君警告
+        if (this.dayLevelInfo!.isChenFanJun) {
+          Row() {
+            Text('⚠️')
+              .fontSize(14)
+              .margin({ right: 4 })
+            Text('臣犯君大忌')
+              .fontSize(12)
+              .fontColor('#f44336')
+              .fontWeight(FontWeight.Bold)
+          }
+          .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+          .backgroundColor('#ffebee')
+          .borderRadius(14)
+          .margin({ right: 8, bottom: 8 })
+          .border({ width: 1, color: '#f44336' })
+        }
+
+        // 15.x时间趋势标签
+        ForEach(this.timeTrendTags, (tag: TimeRiskTag) => {
+          Row() {
+            Text('⚠️')
+              .fontSize(14)
+              .margin({ right: 4 })
+            Text(tag.label)
+              .fontSize(12)
+              .fontColor('#666666')
+          }
+          .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+          .backgroundColor('#f5f5f5')
+          .borderRadius(14)
+          .margin({ right: 8, bottom: 8 })
+          .border({ width: 1, color: '#e0e0e0' })
+        }, (tag: TimeRiskTag) => tag.id)
+      }
+      .width('100%')
+
+      // 简要说明
+      if (this.dayLevelInfo!.recommendation) {
+        Text('💡 ' + this.dayLevelInfo!.recommendation)
+          .fontSize(11)
+          .fontColor('#2196f3')
+          .width('100%')
+          .margin({ top: 10 })
+          .lineHeight(16)
+      }
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor('#ffffff')
+    .borderRadius(12)
+    .margin({ left: 16, right: 16, bottom: 16 })
   }
 
   @Builder
