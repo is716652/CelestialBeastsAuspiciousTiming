@@ -5,6 +5,7 @@ import { loadKnowledge15xConfig, Knowledge15xConfig } from '../utils/Knowledge15
 import { CalendarManager, CalendarDayInfo } from '../utils/CalendarManager';
 import { getQiYaoTypeFromStar, getQiYaoInfo, QiYaoInfo } from '../utils/QiYaoUtils';
 import { evaluateDayQuality, DayQualityEvaluation } from '../utils/BaoYiZhuanUtils';
+import { getStarEventEvaluation, StarEventEvaluation, StarEventType, StarEventLevel } from '../utils/StarEventRulesUtils';
 
 // ============== 接口定义 ==============
 
@@ -1228,6 +1229,51 @@ struct YanQinPanShi {
           // ========== 七曜总断与宝义专日 ==========
           if (this.dayQiYaoInfo && this.dayLevelInfo) {
             this.QiYaoBaoYiZhuanCard()
+
+            if (this.getDayStarEventHints().length > 0) {
+              Column() {
+                Row() {
+                  Text('📚 二十八宿用事研习')
+                    .fontSize(14)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#92400e')
+                  Blank()
+                  Text('仅针对当前日禽')
+                    .fontSize(11)
+                    .fontColor('#fb923c')
+                }
+                .width('100%')
+                .margin({ bottom: 6 })
+
+                Text('根据《二十八宿诸禽断诀》，整理当前日禽星宿在部分常见用事上的倾向，仅作文化研习参考。')
+                  .fontSize(11)
+                  .fontColor('#92400e')
+                  .width('100%')
+                  .margin({ bottom: 6 })
+
+                ForEach(this.getDayStarEventHints(), (item: StarEventEvaluation) => {
+                  Column() {
+                    Text(this.getStarEventLevelLabel(item.level) + ' · ' + item.eventName)
+                      .fontSize(12)
+                      .fontWeight(FontWeight.Medium)
+                      .fontColor('#7c2d12')
+                      .width('100%')
+                    Text(item.reason)
+                      .fontSize(11)
+                      .fontColor('#92400e')
+                      .width('100%')
+                      .margin({ top: 2 })
+                  }
+                  .width('100%')
+                  .margin({ bottom: 6 })
+                })
+              }
+              .width('100%')
+              .padding(12)
+              .backgroundColor('#fffbeb')
+              .borderRadius(12)
+              .margin({ left: 16, right: 16, bottom: 12 })
+            }
           }
   
           // ========== 锁泊十二宫图 ==========
@@ -2271,6 +2317,36 @@ struct YanQinPanShi {
     }
 
     return results.length > 0 ? results.join('；') : `${timeDesc}，禽星无明显昼夜属性`;
+  }
+
+  // 获取二十八宿用事研习提示（仅日禽）
+  private getDayStarEventHints(): Array<StarEventEvaluation> {
+    const results: Array<StarEventEvaluation> = [];
+    if (!this.wuQinResult) {
+      return results;
+    }
+    const star: string = this.wuQinResult.dayStar.star;
+    const events: Array<StarEventType> = ['埋葬安葬', '嫁娶纳妾', '行商贸易', '求名考试'];
+    events.forEach((eventName: StarEventType) => {
+      const evalResult = getStarEventEvaluation(star, eventName);
+      if (evalResult) {
+        results.push(evalResult);
+      }
+    });
+    return results;
+  }
+
+  private getStarEventLevelLabel(level: StarEventLevel): string {
+    if (level === 'greatGood') {
+      return '大吉';
+    }
+    if (level === 'good') {
+      return '可用';
+    }
+    if (level === 'neutral') {
+      return '平平';
+    }
+    return '不宜';
   }
 
   // ============== 星宿物象方法 ==============

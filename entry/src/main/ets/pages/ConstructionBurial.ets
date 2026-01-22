@@ -5,6 +5,7 @@ import { CalendarManager, CalendarDayInfo } from '../utils/CalendarManager';
 import { loadBurialRulesConfig, calcBurialPrediction, BurialRulesConfig, BurialResult } from '../utils/Knowledge15x';
 import { getQiYaoTypeFromStar, getQiYaoInfo, QiYaoInfo } from '../utils/QiYaoUtils';
 import { evaluateDayQuality, DayQualityEvaluation } from '../utils/BaoYiZhuanUtils';
+import { getStarEventEvaluation } from '../utils/StarEventRulesUtils';
 
 interface ConstellationInfo {
   full_name: string;
@@ -115,6 +116,27 @@ struct ConstructionBurial {
     return constellations[(constellations.indexOf(jiangStar) + (posInCycle % 15)) % 28];
   }
 
+  private getBurialStarHint(): string {
+    if (!this.currentDayStar) {
+      return '';
+    }
+    const evalResult = getStarEventEvaluation(this.currentDayStar, '埋葬安葬');
+    if (!evalResult) {
+      return '';
+    }
+    let levelLabel: string = '';
+    if (evalResult.level === 'greatGood') {
+      levelLabel = '大吉';
+    } else if (evalResult.level === 'good') {
+      levelLabel = '可用';
+    } else if (evalResult.level === 'neutral') {
+      levelLabel = '平平';
+    } else {
+      levelLabel = '不宜';
+    }
+    return `${evalResult.name}（${levelLabel}）：${evalResult.reason}`;
+  }
+
   build() {
     Column() {
       Row() {
@@ -172,6 +194,31 @@ struct ConstructionBurial {
             // ========== 七曜与宝义专日建议 ==========
             if (this.dayQiYaoInfo && this.dayLevelInfo) {
               this.QiYaoBaoYiZhuanCard()
+
+              if (this.getBurialStarHint() !== '') {
+                Column() {
+                  Row() {
+                    Text('📌')
+                      .fontSize(12)
+                      .margin({ right: 4 })
+                    Text('二十八宿造葬用事提示')
+                      .fontSize(11)
+                      .fontWeight(FontWeight.Bold)
+                      .fontColor('#92400e')
+                  }
+                  .margin({ bottom: 2 })
+
+                  Text(this.getBurialStarHint())
+                    .fontSize(11)
+                    .fontColor('#92400e')
+                    .width('100%')
+                }
+                .width('100%')
+                .padding({ top: 6, bottom: 6, left: 8, right: 8 })
+                .margin({ top: 8, left: 16, right: 16 })
+                .backgroundColor('#fffbeb')
+                .borderRadius(6)
+              }
             }
             
             Column() {
