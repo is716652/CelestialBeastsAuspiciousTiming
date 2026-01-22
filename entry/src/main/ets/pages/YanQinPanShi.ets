@@ -2,6 +2,9 @@ import { common } from '@kit.AbilityKit';
 import { buffer, JSON as ArkJSON } from '@kit.ArkTS';
 import { router } from '@kit.ArkUI';
 import { loadKnowledge15xConfig, Knowledge15xConfig } from '../utils/Knowledge15x';
+import { CalendarManager, CalendarDayInfo } from '../utils/CalendarManager';
+import { getQiYaoTypeFromStar, getQiYaoInfo, QiYaoInfo } from '../utils/QiYaoUtils';
+import { evaluateDayQuality, DayQualityEvaluation } from '../utils/BaoYiZhuanUtils';
 
 // ============== 接口定义 ==============
 
@@ -283,6 +286,11 @@ struct YanQinPanShi {
   @State nobleHints: Array<string> = [];
   @State panRiskHints: Array<string> = [];
 
+  // 七曜与宝义专日
+  @State dayQiYaoInfo: QiYaoInfo | null = null;
+  @State dayInfo: CalendarDayInfo | null = null;
+  @State dayLevelInfo: DayQualityEvaluation | null = null;
+
   aboutToAppear(): void {
     // 初始化选项数据
     for (let i = 0; i < 120; i++) {
@@ -349,6 +357,18 @@ struct YanQinPanShi {
     this.yuanName = dayResult.yuanName;
     this.jiangIndex = dayResult.jiangIndex;
     this.jiangStar = dayResult.jiangStar;
+
+    // 获取七曜信息
+    const qiYaoType = getQiYaoTypeFromStar(dayResult.star);
+    if (qiYaoType) {
+      this.dayQiYaoInfo = getQiYaoInfo(qiYaoType);
+    }
+
+    // 获取万年历信息和宝义专日评估
+    this.dayInfo = await CalendarManager.getInstance().getDayInfo(this.selectedYear, this.selectedMonth, this.selectedDay);
+    if (this.dayInfo) {
+      this.dayLevelInfo = evaluateDayQuality(this.dayInfo.day_gan, this.dayInfo.year_gan);
+    }
 
     // 2. 计算翻禽和活曜
     const fanQinResult = this.calculateFanQin(dayResult.jiangStar, hourResult.star, this.selectedHourIndex, cfg);
@@ -1204,6 +1224,11 @@ struct YanQinPanShi {
           .backgroundColor('#ffffff')
           .borderRadius(14)
           .margin({ left: 16, right: 16, bottom: 12 })
+
+          // ========== 七曜总断与宝义专日 ==========
+          if (this.dayQiYaoInfo && this.dayLevelInfo) {
+            this.QiYaoBaoYiZhuanCard()
+          }
   
           // ========== 锁泊十二宫图 ==========
           Column() {
@@ -2328,5 +2353,108 @@ struct YanQinPanShi {
       return result;
     }
     return { imagery: '普通物品', material: '不详', examples: '无特殊象义' } as StarImageryInfo;
+  }
+
+  // ============== 七曜与宝义专日组件 ==============
+
+  @Builder
+  QiYaoBaoYiZhuanCard() {
+    Column() {
+      Text('── 本日吉凶总断 ──')
+        .fontSize(12)
+        .fontColor('#666666')
+        .width('100%')
+        .textAlign(TextAlign.Center)
+        .margin({ bottom: 12 })
+
+      Row() {
+        // 左侧：七曜总断
+        Column() {
+          Row() {
+            Text('🌟')
+              .fontSize(14)
+              .margin({ right: 4 })
+            Text(this.dayQiYaoInfo!.name)
+              .fontSize(13)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(this.dayQiYaoInfo!.color)
+          }
+          .margin({ bottom: 6 })
+
+          Text('性质：' + this.dayQiYaoInfo!.nature)
+            .fontSize(11)
+            .fontColor('#666666')
+            .width('100%')
+            .margin({ bottom: 4 })
+
+          if (this.dayQiYaoInfo!.suitableEvents.length > 0) {
+            Text('✅ ' + this.dayQiYaoInfo!.suitableEvents.join('、'))
+              .fontSize(10)
+              .fontColor('#4caf50')
+              .width('100%')
+              .margin({ bottom: 3 })
+          }
+
+          if (this.dayQiYaoInfo!.avoidEvents.length > 0) {
+            Text('❌ ' + this.dayQiYaoInfo!.avoidEvents.join('、'))
+              .fontSize(10)
+              .fontColor('#f44336')
+              .width('100%')
+          }
+        }
+        .layoutWeight(1)
+        .padding(10)
+        .backgroundColor('#f5f5f5')
+        .borderRadius(8)
+
+        // 右侧：宝义专日
+        Column() {
+          Row() {
+            Text(this.dayLevelInfo!.dayLevelInfo.emoji)
+              .fontSize(14)
+              .margin({ right: 4 })
+            Text(this.dayLevelInfo!.dayLevelInfo.name)
+              .fontSize(13)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(this.dayLevelInfo!.dayLevelInfo.color)
+          }
+          .margin({ bottom: 6 })
+
+          Text(this.dayLevelInfo!.dayLevelInfo.description)
+            .fontSize(11)
+            .fontColor('#666666')
+            .width('100%')
+            .margin({ bottom: 4 })
+
+          if (this.dayLevelInfo!.isChenFanJun) {
+            Text('⚠️ 臣犯君大忌')
+              .fontSize(10)
+              .fontColor('#f44336')
+              .width('100%')
+              .padding(4)
+              .backgroundColor('#fff3e0')
+              .borderRadius(4)
+          }
+        }
+        .layoutWeight(1)
+        .padding(10)
+        .backgroundColor('#e3f2fd')
+        .borderRadius(8)
+        .margin({ left: 8 })
+      }
+      .width('100%')
+
+      Text('💡 ' + this.dayLevelInfo!.recommendation)
+        .fontSize(11)
+        .fontColor('#2196f3')
+        .width('100%')
+        .lineHeight(16)
+        .margin({ top: 10 })
+    }
+    .width('100%')
+    .padding(14)
+    .backgroundColor('#ffffff')
+    .borderRadius(14)
+    .margin({ left: 16, right: 16, bottom: 12 })
   }
 }

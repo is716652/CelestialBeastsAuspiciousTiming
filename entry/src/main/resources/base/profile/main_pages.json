@@ -8,6 +8,7 @@
     "pages/WeatherMeteorology",
     "pages/ConstructionBurial",
     "pages/KnowledgeGraph",
-    "pages/NodeDetail"
+    "pages/NodeDetail",
+    "pages/SmartDateSelector"
   ]
 }
