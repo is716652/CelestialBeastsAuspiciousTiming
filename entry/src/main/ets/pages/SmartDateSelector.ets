@@ -3,6 +3,7 @@ import { router } from '@kit.ArkUI';
 import { CalendarManager, CalendarDayInfo } from '../utils/CalendarManager';
 import { getQiYaoTypeFromStar, getQiYaoInfo, QiYaoInfo, getAllEventTypes, getEventSuggestion, EventSuggestion } from '../utils/QiYaoUtils';
 import { evaluateDayQuality, getDayLevelByGan, DayQualityEvaluation } from '../utils/BaoYiZhuanUtils';
+import { getStarEventEvaluation, StarEventType } from '../utils/StarEventRulesUtils';
 import { buffer, JSON as ArkJSON } from '@kit.ArkTS';
 
 // ============== 接口定义 ==============
@@ -239,6 +240,44 @@ struct SmartDateSelector {
     this.auspiciousDays = results;
     this.hasSearched = true;
     this.isSearching = false;
+  }
+
+  private getStarEventHintText(day: AuspiciousDay): string {
+    const supportedEvents: StarEventType[] = [
+      '埋葬安葬',
+      '嫁娶纳妾',
+      '求名考试',
+      '上官赴任',
+      '征伐捕盗',
+      '行商贸易',
+      '造宅修建',
+      '祈福祭祀'
+    ];
+    let matchedEvent: StarEventType | null = null;
+    for (let i = 0; i < supportedEvents.length; i++) {
+      if (supportedEvents[i] === this.selectedEventType) {
+        matchedEvent = supportedEvents[i];
+        break;
+      }
+    }
+    if (!matchedEvent) {
+      return '';
+    }
+    const evalResult = getStarEventEvaluation(day.dayStar, matchedEvent);
+    if (!evalResult) {
+      return '';
+    }
+    let levelLabel = '';
+    if (evalResult.level === 'greatGood') {
+      levelLabel = '大吉';
+    } else if (evalResult.level === 'good') {
+      levelLabel = '可用';
+    } else if (evalResult.level === 'neutral') {
+      levelLabel = '平平';
+    } else {
+      levelLabel = '不宜';
+    }
+    return `${evalResult.name}（${levelLabel}）：${evalResult.reason}`;
   }
 
   build() {
@@ -529,6 +568,32 @@ struct SmartDateSelector {
           .fontColor('#666666')
       }
       .width('100%')
+
+      // 二十八宿用事提示（如有）
+      if (this.getStarEventHintText(day) !== '') {
+        Column() {
+          Row() {
+            Text('📌')
+              .fontSize(12)
+              .margin({ right: 4 })
+            Text('二十八宿用事提示')
+              .fontSize(11)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#92400e')
+          }
+          .margin({ bottom: 2 })
+
+          Text(this.getStarEventHintText(day))
+            .fontSize(11)
+            .fontColor('#92400e')
+            .width('100%')
+        }
+        .width('100%')
+        .padding({ top: 6, bottom: 6, left: 8, right: 8 })
+        .margin({ top: 8 })
+        .backgroundColor('#fffbeb')
+        .borderRadius(6)
+      }
     }
     .width('100%')
     .padding(14)
