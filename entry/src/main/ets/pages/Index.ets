@@ -1,7 +1,9 @@
 import { common } from '@kit.AbilityKit';
 import { buffer, JSON as ArkJSON } from '@kit.ArkTS';
 import { router } from '@kit.ArkUI';
-import { CalendarManager } from '../utils/CalendarManager';
+import { CalendarManager, CalendarDayInfo } from '../utils/CalendarManager';
+import { getQiYaoTypeFromStar, getQiYaoInfo, QiYaoInfo, getSuitableEventsForStar } from '../utils/QiYaoUtils';
+import { evaluateDayQuality, DayLevel, getDayLevelInfo, DayQualityEvaluation } from '../utils/BaoYiZhuanUtils';
 
 // ============== 接口定义 ==============
 
@@ -64,6 +66,9 @@ struct Index {
   @State hasLoaded: boolean = false;
   @State starRulesConfig: YanqinStarRulesConfig | null = null;
   @State dayStarResult: DayStarCalcResult | null = null;
+  @State qiYaoInfo: QiYaoInfo | null = null;
+  @State dayInfo: CalendarDayInfo | null = null;
+  @State dayLevelInfo: DayQualityEvaluation | null = null;
 
   private starEmojiMap: Record<string, string> = {
     '角': '🐉', '亢': '🐲', '氐': '🦡', '房': '🐰', '心': '🦊', '尾': '🐯', '箵': '🐆',
@@ -160,6 +165,19 @@ struct Index {
     if (starRules) {
       this.starRulesConfig = starRules;
       this.dayStarResult = this.calculateDayStar(this.selectedYear, this.selectedMonth, this.selectedDay, starRules);
+      
+      // 获取七曜信息
+      const qiYaoType = getQiYaoTypeFromStar(this.dayStarResult.star);
+      if (qiYaoType) {
+        this.qiYaoInfo = getQiYaoInfo(qiYaoType);
+      }
+      
+      // 获取万年历信息和宝义专日评估
+      this.dayInfo = await CalendarManager.getInstance().getDayInfo(this.selectedYear, this.selectedMonth, this.selectedDay);
+      if (this.dayInfo) {
+        this.dayLevelInfo = evaluateDayQuality(this.dayInfo.day_gan, this.dayInfo.year_gan);
+      }
+      
       this.hasLoaded = true;
     }
   }
@@ -320,10 +338,16 @@ struct Index {
             .width('100%')
             .height(240)
 
+            // ========== 七曜总断与宝义专日卡片 ==========
+            if (this.qiYaoInfo && this.dayLevelInfo) {
+              this.QiYaoBaoYiZhuanCard()
+            }
+
             // 底部次级模块
             Row() {
               this.SmallActionCard('案例库', 'pages/AdvancedStudyCases')
               this.SmallActionCard('知识图谱', 'pages/KnowledgeGraph')
+              this.SmallActionCard('智能择日', 'pages/SmartDateSelector')
             }
             .width('100%')
             .padding({ left: 20, right: 20, top: 20 })
@@ -376,6 +400,10 @@ struct Index {
           .height(40)
           .borderRadius(8)
           .margin({ bottom: 6 })
+      } else if (title === '智能择日') {
+        Text('📅')
+          .fontSize(32)
+          .margin({ bottom: 6 })
       }
 
       Text(title)
@@ -393,6 +421,138 @@ struct Index {
     .onClick(() => {
       router.pushUrl({ url: url })
     })
+  }
+
+  @Builder
+  QiYaoBaoYiZhuanCard() {
+    Column() {
+      Text('── 今日吉凶总断 ──')
+        .fontSize(13)
+        .fontColor('#666666')
+        .margin({ bottom: 15 })
+
+      // 七曜总断区域
+      Column() {
+        Row() {
+          Text('七曜属性')
+            .fontSize(14)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#333333')
+          Blank()
+          Text(this.qiYaoInfo!.name + ' · ' + this.qiYaoInfo!.alias)
+            .fontSize(14)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.qiYaoInfo!.color)
+        }
+        .width('100%')
+        .margin({ bottom: 10 })
+
+        Text('性质：' + this.qiYaoInfo!.nature)
+          .fontSize(12)
+          .fontColor('#666666')
+          .width('100%')
+          .margin({ bottom: 8 })
+
+        if (this.qiYaoInfo!.suitableEvents.length > 0) {
+          Row() {
+            Text('✅ 宜：')
+              .fontSize(12)
+              .fontColor('#4caf50')
+            Text(this.qiYaoInfo!.suitableEvents.join('、'))
+              .fontSize(12)
+              .fontColor('#4caf50')
+              .layoutWeight(1)
+          }
+          .width('100%')
+          .margin({ bottom: 6 })
+        }
+
+        if (this.qiYaoInfo!.avoidEvents.length > 0) {
+          Row() {
+            Text('❌ 忌：')
+              .fontSize(12)
+              .fontColor('#f44336')
+            Text(this.qiYaoInfo!.avoidEvents.join('、'))
+              .fontSize(12)
+              .fontColor('#f44336')
+              .layoutWeight(1)
+          }
+          .width('100%')
+        }
+      }
+      .width('100%')
+      .padding(15)
+      .backgroundColor('#f5f5f5')
+      .borderRadius(12)
+      .margin({ bottom: 15 })
+
+      // 宝义专日区域
+      Column() {
+        Row() {
+          Text('时间能量')
+            .fontSize(14)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#333333')
+          Blank()
+          Row() {
+            Text(this.dayLevelInfo!.dayLevelInfo.emoji)
+              .fontSize(16)
+              .margin({ right: 4 })
+            Text(this.dayLevelInfo!.dayLevelInfo.name)
+              .fontSize(14)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(this.dayLevelInfo!.dayLevelInfo.color)
+          }
+        }
+        .width('100%')
+        .margin({ bottom: 10 })
+
+        Text(this.dayLevelInfo!.dayLevelInfo.description)
+          .fontSize(12)
+          .fontColor('#666666')
+          .width('100%')
+          .margin({ bottom: 8 })
+
+        if (this.dayLevelInfo!.isChenFanJun) {
+          Text(this.dayLevelInfo!.chenFanJunDesc)
+            .fontSize(11)
+            .fontColor('#f44336')
+            .width('100%')
+            .padding(8)
+            .backgroundColor('#fff3e0')
+            .borderRadius(6)
+            .margin({ bottom: 8 })
+        }
+
+        Text('💡 ' + this.dayLevelInfo!.recommendation)
+          .fontSize(12)
+          .fontColor('#2196f3')
+          .width('100%')
+          .lineHeight(18)
+      }
+      .width('100%')
+      .padding(15)
+      .backgroundColor('#e3f2fd')
+      .borderRadius(12)
+
+      // 查看详情按钮
+      Button('📆 开启智能择日助手')
+        .fontSize(14)
+        .fontColor('#ffffff')
+        .backgroundColor('#3d6b4f')
+        .width('100%')
+        .height(44)
+        .margin({ top: 15 })
+        .onClick(() => {
+          router.pushUrl({ url: 'pages/SmartDateSelector' })
+        })
+    }
+    .width('100%')
+    .padding(20)
+    .margin({ left: 20, right: 20, top: 15 })
+    .backgroundColor('#ffffff')
+    .borderRadius(16)
+    .shadow({ radius: 8, color: '#00000010', offsetY: 2 })
   }
 
   @Builder
